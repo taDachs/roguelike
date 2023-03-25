@@ -134,11 +134,12 @@ void Sprite::draw(SDL_Renderer* renderer, int x, int y)
   SDL_RenderCopy(renderer, m_texture, &m_frames[m_current_frame], &dst_rect);
 }
 
-void Sprite::draw(SDL_Renderer* renderer, SDL_Rect dst)
+void Sprite::reset()
 {
-  // Draw the current frame of the sprite at the given position
-  SDL_RenderCopy(renderer, m_texture, &m_frames[m_current_frame], &dst);
+  m_current_frame = 0;
+  m_frame_time = SDL_GetTicks();
 }
+
 
 // Load a sprite from a file
 void SpriteManager::addSprite(const std::string& sprite_name, const Sprite::Ptr& sprite) {

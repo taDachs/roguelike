@@ -20,8 +20,9 @@ include_directories(${Boost_INCLUDE_DIR} ${SDL2_INCLUDE_DIRS} include)
 add_library(GAME_LIB
   src/rpg/ui.cpp
   src/rpg/asset_manager.cpp
-  src/rpg/actor.cpp
-  )
+  src/rpg/render.cpp
+  src/rpg/ecs.cpp
+)
 # target_include_directories(GAME_LIB)
 target_link_libraries(GAME_LIB SDL2::Main SDL2::TTF SDL2::Image ${GLM_LIBRARIES})
 

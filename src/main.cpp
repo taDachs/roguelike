@@ -1,7 +1,17 @@
-#include "rpg/actor.h"
 #include <SDL.h>
 #include <iostream>
-#include <rpg/asset_manager.h>
+#include "rpg/asset_manager.h"
+#include "rpg/render.h"
+#include "rpg/ecs.h"
+#include "rpg/components.h"
+
+const std::vector<rpg::State> STATES = {
+  "idle",
+  "walking",
+  "running",
+  "shot_1",
+  "dead"
+};
 
 void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer) {
   SDL_Rect attack_rect = {32, 64, 64, 64}; // Example sprite size and position
@@ -41,21 +51,35 @@ void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer) {
   sm.addSprite("walking", walk_sprite);
 }
 
-rpg::Actor setupActor(rpg::SpriteManager& sm) {
-  std::map<rpg::State, rpg::Sprite::Ptr> sprites;
-  sprites[rpg::State::IDLE] = sm.getSprite("idle");
-  sprites[rpg::State::FIRING] = sm.getSprite("shot_2");
-  sprites[rpg::State::WALKING] = sm.getSprite("walking");
-  sprites[rpg::State::RUNNING] = sm.getSprite("running");
-  sprites[rpg::State::DEAD] = sm.getSprite("dead");
-  sprites[rpg::State::NONE] = sm.getSprite("idle");
+rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::Manager& mg) {
+  rpg::EntityID id = mg.addEntity();
+  rpg::Entity& entity = mg.getEntity(id);
 
-  rpg::Visualizer vis(sprites);
+  auto pose = std::make_shared<rpg::PositionComponent>();
+  pose->pose.x = 128;
+  pose->pose.y = 128;
 
-  rpg::Actor actor;
-  actor.setVisual(vis);
+  auto render = std::make_shared<rpg::RenderComponent>();
+  render->sprite = sm.getSprite("idle");
 
-  return actor;
+  auto animation = std::make_shared<rpg::AnimationComponent>();
+  std::map<rpg::State, std::shared_ptr<rpg::Sprite>> sprite_map;
+  for (const auto& state : STATES) {
+    sprite_map[state] = sm.getSprite(state);
+  }
+  animation->sprite_map = sprite_map;
+  // animation->sprite_map =
+
+  auto state = std::make_shared<rpg::StateComponent>();
+  state->state = "idle";
+  // animation->sprite_map =
+
+  entity.addComponent(pose);
+  entity.addComponent(render);
+  entity.addComponent(animation);
+  entity.addComponent(state);
+
+  return id;
 }
 
 int main(int argc, char* args[])
@@ -76,19 +100,17 @@ int main(int argc, char* args[])
   rpg::SpriteManager sprite_manager;
   loadSprites(sprite_manager, renderer);
 
+  rpg::Manager manager;
+  auto render = std::make_unique<rpg::RenderSystem>(renderer);
+  auto animation = std::make_unique<rpg::AnimationSystem>();
+  manager.addSystem(std::move(render));
+  manager.addSystem(std::move(animation));
+  rpg::EntityID soldier_id = initSoldier(sprite_manager, manager);
 
   int fps = 10;
   int frame_delay = 1000 / fps;
   uint frame_start;
   uint frame_time;
-
-  std::vector<rpg::State> states = {
-    rpg::IDLE,
-    rpg::FIRING,
-    rpg::WALKING,
-    rpg::RUNNING,
-    rpg::DEAD
-  };
 
   SDL_Rect dst_rect = {0, 0, 384, 384}; // Example sprite size and position
 
@@ -98,8 +120,6 @@ int main(int argc, char* args[])
   bool quit = false;
 
   int state_index = 0;
-  rpg::Actor actor = setupActor(sprite_manager);
-  actor.setState(states[state_index]);
 
   while (!quit)
   {
@@ -110,13 +130,12 @@ int main(int argc, char* args[])
       if (event.type == SDL_KEYDOWN) {
         if (event.key.keysym.sym == SDLK_n) {
           state_index += 1;
-          state_index %= states.size();
+          state_index %= STATES.size();
         }
-      }
-      if (event.type == SDL_KEYUP) {
-        if (event.key.keysym.sym == SDLK_n) {
-          state_index -= 1 + states.size(); // for avoiding underflows
-          state_index %= states.size();
+        if (event.key.keysym.sym == SDLK_p) {
+          state_index -= 1;
+          state_index  += STATES.size();
+          state_index %= STATES.size();
         }
       }
       if (event.type == SDL_QUIT)
@@ -129,7 +148,8 @@ int main(int argc, char* args[])
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderClear(renderer);
 
-    actor.getVisual().draw(renderer);
+    manager.getEntity(soldier_id).getComponent<rpg::StateComponent>()->state = STATES[state_index];
+    manager.update();
 
     SDL_RenderPresent(renderer);
 
