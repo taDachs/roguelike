@@ -40,5 +40,10 @@ struct AnimationComponent : public Component {
 
 struct PlayerControlComponent : public Component {};
 
+struct PathFollowingComponent : public Component {
+  std::vector<glm::vec2> path;
+  glm::vec2 goal;
+};
+
 }
 

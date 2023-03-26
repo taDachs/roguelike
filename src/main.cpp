@@ -8,13 +8,14 @@
 #include <iostream>
 
 const std::vector<rpg::State> STATES = {"idle", "walking", "running", "shot_1", "dead"};
+auto g_path = std::make_shared<rpg::PathFollowingComponent>();
 
 void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
 {
-  int frame_delay = 100;
-  SDL_Rect attack_rect = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr attack_sprite =
-    std::make_shared<rpg::Sprite>("assets/soldier_1/Attack.png", renderer, frame_delay, attack_rect);
+  int frame_delay                = 100;
+  SDL_Rect attack_rect           = {32, 64, 64, 64}; // Example sprite size and position
+  rpg::Sprite::Ptr attack_sprite = std::make_shared<rpg::Sprite>(
+    "assets/soldier_1/Attack.png", renderer, frame_delay, attack_rect);
   sm.addSprite("attack", attack_sprite);
 
   SDL_Rect dead_rect = {32, 64, 64, 64}; // Example sprite size and position
@@ -32,9 +33,9 @@ void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
     std::make_shared<rpg::Sprite>("assets/soldier_1/Idle.png", renderer, frame_delay, idle_rect);
   sm.addSprite("idle", idle_sprite);
 
-  SDL_Rect recharge_rect = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr recharge_sprite =
-    std::make_shared<rpg::Sprite>("assets/soldier_1/Recharge.png", renderer, frame_delay, recharge_rect);
+  SDL_Rect recharge_rect           = {32, 64, 64, 64}; // Example sprite size and position
+  rpg::Sprite::Ptr recharge_sprite = std::make_shared<rpg::Sprite>(
+    "assets/soldier_1/Recharge.png", renderer, frame_delay, recharge_rect);
   sm.addSprite("recharge", recharge_sprite);
 
   SDL_Rect run_rect = {40, 64, 64, 64}; // Example sprite size and position
@@ -42,14 +43,14 @@ void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
     std::make_shared<rpg::Sprite>("assets/soldier_1/Run.png", renderer, frame_delay, run_rect);
   sm.addSprite("running", run_sprite);
 
-  SDL_Rect shot_1_rect = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr shot_1_sprite =
-    std::make_shared<rpg::Sprite>("assets/soldier_1/Shot_1.png", renderer, frame_delay, shot_1_rect);
+  SDL_Rect shot_1_rect           = {32, 64, 64, 64}; // Example sprite size and position
+  rpg::Sprite::Ptr shot_1_sprite = std::make_shared<rpg::Sprite>(
+    "assets/soldier_1/Shot_1.png", renderer, frame_delay, shot_1_rect);
   sm.addSprite("shot_1", shot_1_sprite);
 
-  SDL_Rect shot_2_rect = {40, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr shot_2_sprite =
-    std::make_shared<rpg::Sprite>("assets/soldier_1/Shot_2.png", renderer, frame_delay, shot_2_rect);
+  SDL_Rect shot_2_rect           = {40, 64, 64, 64}; // Example sprite size and position
+  rpg::Sprite::Ptr shot_2_sprite = std::make_shared<rpg::Sprite>(
+    "assets/soldier_1/Shot_2.png", renderer, frame_delay, shot_2_rect);
   sm.addSprite("shot_2", shot_2_sprite);
 
   SDL_Rect walk_rect = {40, 64, 64, 64}; // Example sprite size and position
@@ -81,20 +82,21 @@ rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::Manager& mg)
   auto state   = std::make_shared<rpg::StateComponent>();
   state->state = "idle";
 
-  auto moveable   = std::make_shared<rpg::MoveableComponent>();
+  auto moveable                 = std::make_shared<rpg::MoveableComponent>();
   moveable->current_direction.x = 0;
   moveable->current_direction.y = 0;
-  moveable->walking_velocity = 3;
-  moveable->running_velocity = 9;
+  moveable->walking_velocity    = 3;
+  moveable->running_velocity    = 9;
 
-  auto player_control   = std::make_shared<rpg::PlayerControlComponent>();
+  auto player_control = std::make_shared<rpg::PlayerControlComponent>();
 
   entity.addComponent(pose);
   entity.addComponent(render);
   entity.addComponent(animation);
   entity.addComponent(state);
-  entity.addComponent(player_control);
+  // entity.addComponent(player_control);
   entity.addComponent(moveable);
+  entity.addComponent(g_path);
 
   return id;
 }
@@ -120,7 +122,7 @@ int main(int argc, char* args[])
 
   rpg::Manager manager;
 
-  auto render         = std::make_shared<rpg::RenderSystem>(renderer);
+  auto render = std::make_shared<rpg::RenderSystem>(renderer);
   glm::mat3 game_to_screen(glm::vec3(20, 0, 0), glm::vec3(0, 20, 0), glm::vec3(0, 0, 1));
   render->setGameToScreen(game_to_screen);
 
@@ -129,10 +131,13 @@ int main(int argc, char* args[])
 
   auto moveable = std::make_shared<rpg::MoveableSystem>();
 
+  auto path = std::make_shared<rpg::PathFollowingSystem>();
+
   manager.addSystem(render);
   manager.addSystem(animation);
   manager.addSystem(player_control);
   manager.addSystem(moveable);
+  manager.addSystem(path);
 
   rpg::EntityID soldier_id = initSoldier(sprite_manager, manager);
 
@@ -159,6 +164,24 @@ int main(int argc, char* args[])
       if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
       {
         player_control->addEvent(event);
+      }
+      if (event.type == SDL_MOUSEBUTTONDOWN)
+      {
+        // Handle mouse click
+        if (event.button.button == SDL_BUTTON_LEFT)
+        {
+          // Handle left mouse button click
+          glm::vec3 click_pos;
+          click_pos.x = event.button.x;
+          click_pos.y = event.button.y;
+          click_pos.z = 1;
+
+          glm::vec2 screen_pos = render->getScreenToGame() * click_pos;
+          std::cout << screen_pos.x << ", " << screen_pos.y << std::endl;
+          g_path->path.push_back(screen_pos);
+          // Do something with x and y coordinates
+        }
+        // Handle other mouse button clicks as needed
       }
       if (event.type == SDL_QUIT)
       {

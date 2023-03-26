@@ -16,5 +16,14 @@ private:
   uint m_last_time;
   uint m_tick_delay = 100;
 };
+
+class PathFollowingSystem : public System
+{
+public:
+  bool isApplicable(const Entity& entity) override;
+  void update(const Entity& entity) override;
+private:
+  float m_min_distance = 0.1;
+};
 }
 
