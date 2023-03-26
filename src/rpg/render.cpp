@@ -1,4 +1,5 @@
 #include "rpg/render.h"
+#include <iostream>
 
 using namespace rpg;
 bool RenderSystem::isApplicable(const Entity& entity)
@@ -13,8 +14,13 @@ void RenderSystem::update(const Entity& entity)
   auto render   = entity.getComponent<RenderComponent>();
   auto position = entity.getComponent<PositionComponent>();
 
-  render->sprite->draw(
-    m_renderer, static_cast<int>(position->pose.x), static_cast<int>(position->pose.y));
+  glm::vec3 game_pose(position->pose, 1);
+  glm::vec2 screen_pose = m_game_to_screen * game_pose;
+
+  render->sprite->draw(m_renderer,
+                       static_cast<int>(screen_pose.x),
+                       static_cast<int>(screen_pose.y),
+                       position->orientation == PositionComponent::Orientation::LEFT);
 }
 
 bool AnimationSystem::isApplicable(const Entity& entity)
@@ -29,13 +35,16 @@ void AnimationSystem::update(const Entity& entity)
   auto render    = entity.getComponent<RenderComponent>();
   auto animation = entity.getComponent<AnimationComponent>();
 
-  auto state = entity.getComponent<StateComponent>();
-  bool needs_sprite_change = state != nullptr && (state->state != animation->previous_state);
-  if (needs_sprite_change) {
-    render->sprite = animation->sprite_map.at(state->state);
+  auto state               = entity.getComponent<StateComponent>();
+  bool needs_sprite_change = (state != nullptr) && (state->state != animation->previous_state);
+  if (needs_sprite_change)
+  {
     render->sprite->reset();
+    render->sprite            = animation->sprite_map.at(state->state);
     animation->previous_state = state->state;
-  } else {
+  }
+  else
+  {
     render->sprite->update();
   }
 }

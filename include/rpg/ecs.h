@@ -61,13 +61,13 @@ class Manager
 {
 public:
   EntityID addEntity();
-  void addSystem(std::unique_ptr<System> system);
+  void addSystem(std::shared_ptr<System> system);
   void update();
   Entity& getEntity(EntityID id) const { return *m_entities[id]; }
 
 private:
   std::vector<std::unique_ptr<Entity> > m_entities;
-  std::vector<std::unique_ptr<System> > m_systems;
+  std::vector<std::shared_ptr<System> > m_systems;
 };
 
 } // namespace rpg

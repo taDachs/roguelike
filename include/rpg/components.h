@@ -9,7 +9,12 @@ namespace rpg {
 using State = std::string;
 
 struct PositionComponent : public Component {
-  glm::vec3 pose;
+  enum Orientation {
+    LEFT,
+    RIGHT,
+  };
+  glm::vec2 pose;
+  Orientation orientation = RIGHT;
 };
 
 struct StateComponent : public Component {
@@ -20,14 +25,20 @@ struct RenderComponent : public Component {
   std::shared_ptr<Sprite> sprite;
 };
 
+struct MoveableComponent : public Component {
+  // in m/s
+  glm::vec2 current_direction;
+  bool is_running = false;
+  float walking_velocity;
+  float running_velocity;
+};
+
 struct AnimationComponent : public Component {
   std::map<State, Sprite::Ptr> sprite_map;
   State previous_state;
 };
 
-struct PlayerInputComponent : public Component {
-
-};
+struct PlayerControlComponent : public Component {};
 
 }
 

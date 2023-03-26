@@ -9,9 +9,8 @@ EntityID Manager::addEntity() {
   return id;
 }
 
-void Manager::addSystem(std::unique_ptr<System> system) {
+void Manager::addSystem(std::shared_ptr<System> system) {
   m_systems.push_back(std::move(system));
-
 }
 
 void Manager::update() {

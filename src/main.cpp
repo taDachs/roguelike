@@ -1,83 +1,100 @@
+#include "rpg/asset_manager.h"
+#include "rpg/components.h"
+#include "rpg/ecs.h"
+#include "rpg/player_control.h"
+#include "rpg/render.h"
+#include "rpg/systems.h"
 #include <SDL.h>
 #include <iostream>
-#include "rpg/asset_manager.h"
-#include "rpg/render.h"
-#include "rpg/ecs.h"
-#include "rpg/components.h"
 
-const std::vector<rpg::State> STATES = {
-  "idle",
-  "walking",
-  "running",
-  "shot_1",
-  "dead"
-};
+const std::vector<rpg::State> STATES = {"idle", "walking", "running", "shot_1", "dead"};
 
-void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer) {
+void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
+{
+  int frame_delay = 100;
   SDL_Rect attack_rect = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr attack_sprite = std::make_shared<rpg::Sprite>("assets/soldier_1/Attack.png", renderer, 30, attack_rect);
+  rpg::Sprite::Ptr attack_sprite =
+    std::make_shared<rpg::Sprite>("assets/soldier_1/Attack.png", renderer, frame_delay, attack_rect);
   sm.addSprite("attack", attack_sprite);
 
   SDL_Rect dead_rect = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr dead_sprite = std::make_shared<rpg::Sprite>("assets/soldier_1/Dead.png", renderer, 30, dead_rect);
+  rpg::Sprite::Ptr dead_sprite =
+    std::make_shared<rpg::Sprite>("assets/soldier_1/Dead.png", renderer, frame_delay, dead_rect);
   sm.addSprite("dead", dead_sprite);
 
   SDL_Rect hurt_rect = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr hurt_sprite = std::make_shared<rpg::Sprite>("assets/soldier_1/Hurt.png", renderer, 30, hurt_rect);
+  rpg::Sprite::Ptr hurt_sprite =
+    std::make_shared<rpg::Sprite>("assets/soldier_1/Hurt.png", renderer, frame_delay, hurt_rect);
   sm.addSprite("hurt", hurt_sprite);
 
   SDL_Rect idle_rect = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr idle_sprite = std::make_shared<rpg::Sprite>("assets/soldier_1/Idle.png", renderer, 30, idle_rect);
+  rpg::Sprite::Ptr idle_sprite =
+    std::make_shared<rpg::Sprite>("assets/soldier_1/Idle.png", renderer, frame_delay, idle_rect);
   sm.addSprite("idle", idle_sprite);
 
   SDL_Rect recharge_rect = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr recharge_sprite = std::make_shared<rpg::Sprite>("assets/soldier_1/Recharge.png", renderer, 30, recharge_rect);
+  rpg::Sprite::Ptr recharge_sprite =
+    std::make_shared<rpg::Sprite>("assets/soldier_1/Recharge.png", renderer, frame_delay, recharge_rect);
   sm.addSprite("recharge", recharge_sprite);
 
   SDL_Rect run_rect = {40, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr run_sprite = std::make_shared<rpg::Sprite>("assets/soldier_1/Run.png", renderer, 30, run_rect);
+  rpg::Sprite::Ptr run_sprite =
+    std::make_shared<rpg::Sprite>("assets/soldier_1/Run.png", renderer, frame_delay, run_rect);
   sm.addSprite("running", run_sprite);
 
   SDL_Rect shot_1_rect = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr shot_1_sprite = std::make_shared<rpg::Sprite>("assets/soldier_1/Shot_1.png", renderer, 30, shot_1_rect);
+  rpg::Sprite::Ptr shot_1_sprite =
+    std::make_shared<rpg::Sprite>("assets/soldier_1/Shot_1.png", renderer, frame_delay, shot_1_rect);
   sm.addSprite("shot_1", shot_1_sprite);
 
   SDL_Rect shot_2_rect = {40, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr shot_2_sprite = std::make_shared<rpg::Sprite>("assets/soldier_1/Shot_2.png", renderer, 30, shot_2_rect);
+  rpg::Sprite::Ptr shot_2_sprite =
+    std::make_shared<rpg::Sprite>("assets/soldier_1/Shot_2.png", renderer, frame_delay, shot_2_rect);
   sm.addSprite("shot_2", shot_2_sprite);
 
   SDL_Rect walk_rect = {40, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr walk_sprite = std::make_shared<rpg::Sprite>("assets/soldier_1/Walk.png", renderer, 30, walk_rect);
+  rpg::Sprite::Ptr walk_sprite =
+    std::make_shared<rpg::Sprite>("assets/soldier_1/Walk.png", renderer, frame_delay, walk_rect);
   sm.addSprite("walking", walk_sprite);
 }
 
-rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::Manager& mg) {
-  rpg::EntityID id = mg.addEntity();
+rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::Manager& mg)
+{
+  rpg::EntityID id    = mg.addEntity();
   rpg::Entity& entity = mg.getEntity(id);
 
-  auto pose = std::make_shared<rpg::PositionComponent>();
-  pose->pose.x = 128;
-  pose->pose.y = 128;
+  auto pose    = std::make_shared<rpg::PositionComponent>();
+  pose->pose.x = 10;
+  pose->pose.y = 10;
 
-  auto render = std::make_shared<rpg::RenderComponent>();
+  auto render    = std::make_shared<rpg::RenderComponent>();
   render->sprite = sm.getSprite("idle");
 
   auto animation = std::make_shared<rpg::AnimationComponent>();
-  std::map<rpg::State, std::shared_ptr<rpg::Sprite>> sprite_map;
-  for (const auto& state : STATES) {
+  std::map<rpg::State, std::shared_ptr<rpg::Sprite> > sprite_map;
+  for (const auto& state : STATES)
+  {
     sprite_map[state] = sm.getSprite(state);
   }
   animation->sprite_map = sprite_map;
-  // animation->sprite_map =
 
-  auto state = std::make_shared<rpg::StateComponent>();
+  auto state   = std::make_shared<rpg::StateComponent>();
   state->state = "idle";
-  // animation->sprite_map =
+
+  auto moveable   = std::make_shared<rpg::MoveableComponent>();
+  moveable->current_direction.x = 0;
+  moveable->current_direction.y = 0;
+  moveable->walking_velocity = 3;
+  moveable->running_velocity = 9;
+
+  auto player_control   = std::make_shared<rpg::PlayerControlComponent>();
 
   entity.addComponent(pose);
   entity.addComponent(render);
   entity.addComponent(animation);
   entity.addComponent(state);
+  entity.addComponent(player_control);
+  entity.addComponent(moveable);
 
   return id;
 }
@@ -93,7 +110,8 @@ int main(int argc, char* args[])
 
   SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
 
-  if (!renderer) {
+  if (!renderer)
+  {
     printf("Failed to create renderer: %s\n", SDL_GetError());
   }
 
@@ -101,13 +119,24 @@ int main(int argc, char* args[])
   loadSprites(sprite_manager, renderer);
 
   rpg::Manager manager;
-  auto render = std::make_unique<rpg::RenderSystem>(renderer);
-  auto animation = std::make_unique<rpg::AnimationSystem>();
-  manager.addSystem(std::move(render));
-  manager.addSystem(std::move(animation));
+
+  auto render         = std::make_shared<rpg::RenderSystem>(renderer);
+  glm::mat3 game_to_screen(glm::vec3(20, 0, 0), glm::vec3(0, 20, 0), glm::vec3(0, 0, 1));
+  render->setGameToScreen(game_to_screen);
+
+  auto animation      = std::make_shared<rpg::AnimationSystem>();
+  auto player_control = std::make_shared<rpg::PlayerControlSystem>();
+
+  auto moveable = std::make_shared<rpg::MoveableSystem>();
+
+  manager.addSystem(render);
+  manager.addSystem(animation);
+  manager.addSystem(player_control);
+  manager.addSystem(moveable);
+
   rpg::EntityID soldier_id = initSoldier(sprite_manager, manager);
 
-  int fps = 10;
+  int fps         = 10;
   int frame_delay = 1000 / fps;
   uint frame_start;
   uint frame_time;
@@ -127,16 +156,9 @@ int main(int argc, char* args[])
 
     while (SDL_PollEvent(&event))
     {
-      if (event.type == SDL_KEYDOWN) {
-        if (event.key.keysym.sym == SDLK_n) {
-          state_index += 1;
-          state_index %= STATES.size();
-        }
-        if (event.key.keysym.sym == SDLK_p) {
-          state_index -= 1;
-          state_index  += STATES.size();
-          state_index %= STATES.size();
-        }
+      if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
+      {
+        player_control->addEvent(event);
       }
       if (event.type == SDL_QUIT)
       {
@@ -148,15 +170,15 @@ int main(int argc, char* args[])
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderClear(renderer);
 
-    manager.getEntity(soldier_id).getComponent<rpg::StateComponent>()->state = STATES[state_index];
     manager.update();
 
     SDL_RenderPresent(renderer);
 
-    frame_time = SDL_GetTicks() - frame_start;
-    if (frame_time < frame_delay) {
-        SDL_Delay(frame_delay - frame_time);
-    }
+    // frame_time = SDL_GetTicks() - frame_start;
+    // if (frame_time < frame_delay)
+    // {
+    //   SDL_Delay(frame_delay - frame_time);
+    // }
   }
 
   // Clean up and exit

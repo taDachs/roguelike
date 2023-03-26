@@ -44,8 +44,8 @@ public:
   ~Sprite();
 
   void update();
-  void draw(SDL_Renderer* renderer, int x, int y);
-  void draw(SDL_Renderer* renderer, SDL_Rect dst);
+  void draw(SDL_Renderer* renderer, int x, int y, bool flipped = false);
+  void draw(SDL_Renderer* renderer, SDL_Rect dst, bool flipped = false);
 
   void reset();
 

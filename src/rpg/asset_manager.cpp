@@ -120,18 +120,24 @@ void Sprite::update()
 {
   // Update the current frame based on the frame delay
   uint current_time = SDL_GetTicks();
-  uint diff = m_frame_time - current_time;
+  uint diff = current_time - m_frame_time;
 
-  m_current_frame += diff / m_frame_delay;
-  m_current_frame %= m_frames.size();
-  m_frame_time = current_time;
+  if (diff > m_frame_delay) {
+    m_current_frame += diff / m_frame_delay;
+    m_current_frame %= m_frames.size();
+    m_frame_time = current_time;
+  }
 }
 
-void Sprite::draw(SDL_Renderer* renderer, int x, int y)
+void Sprite::draw(SDL_Renderer* renderer, int x, int y, bool flipped)
 {
   // Draw the current frame of the sprite at the given position
   SDL_Rect dst_rect = {x, y, m_frames[m_current_frame].w, m_frames[m_current_frame].h};
-  SDL_RenderCopy(renderer, m_texture, &m_frames[m_current_frame], &dst_rect);
+  if (flipped) {
+    SDL_RenderCopyEx(renderer, m_texture, &m_frames[m_current_frame], &dst_rect, 0, nullptr, SDL_FLIP_HORIZONTAL);
+  } else {
+    SDL_RenderCopy(renderer, m_texture, &m_frames[m_current_frame], &dst_rect);
+  }
 }
 
 void Sprite::reset()
