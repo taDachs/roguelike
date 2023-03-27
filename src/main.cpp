@@ -6,9 +6,10 @@
 #include "rpg/systems.h"
 #include <SDL.h>
 #include <iostream>
+#include "rpg/movement.h"
 
 const std::vector<rpg::State> STATES = {"idle", "walking", "running", "shot_1", "dead"};
-auto g_path = std::make_shared<rpg::PathFollowingComponent>();
+auto g_path = std::make_shared<rpg::PathComponent>();
 
 void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
 {
@@ -82,11 +83,8 @@ rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::Manager& mg)
   auto state   = std::make_shared<rpg::StateComponent>();
   state->state = "idle";
 
-  auto moveable                 = std::make_shared<rpg::MoveableComponent>();
-  moveable->current_direction.x = 0;
-  moveable->current_direction.y = 0;
-  moveable->walking_velocity    = 3;
-  moveable->running_velocity    = 9;
+  auto stats                    = std::make_shared<rpg::StatsComponent>();
+  stats->speed = 5;
 
   auto player_control = std::make_shared<rpg::PlayerControlComponent>();
 
@@ -95,10 +93,27 @@ rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::Manager& mg)
   entity.addComponent(animation);
   entity.addComponent(state);
   // entity.addComponent(player_control);
-  entity.addComponent(moveable);
   entity.addComponent(g_path);
+  entity.addComponent(stats);
 
   return id;
+}
+
+void drawGrid(SDL_Renderer* renderer, int rows, int cols, int grid_size) {
+ // Set the renderer color to white
+  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+  // Draw the grid
+  for (int row = 0; row < rows; row++) {
+      for (int col = 0; col < cols; col++) {
+          // Calculate the position and size of the current cell
+          int x = col * grid_size;
+          int y = row * grid_size;
+          SDL_Rect rect = { x, y, grid_size, grid_size };
+          // Draw the cell
+          SDL_RenderDrawRect(renderer, &rect);
+      }
+  }
 }
 
 int main(int argc, char* args[])
@@ -122,7 +137,7 @@ int main(int argc, char* args[])
 
   rpg::Manager manager;
 
-  auto render = std::make_shared<rpg::RenderSystem>(renderer);
+  auto render = std::make_shared<rpg::RenderSystem>();
   glm::mat3 game_to_screen(glm::vec3(20, 0, 0), glm::vec3(0, 20, 0), glm::vec3(0, 0, 1));
   render->setGameToScreen(game_to_screen);
 
@@ -178,6 +193,9 @@ int main(int argc, char* args[])
 
           glm::vec2 screen_pos = render->getScreenToGame() * click_pos;
           std::cout << screen_pos.x << ", " << screen_pos.y << std::endl;
+          if (g_path->path.empty()) {
+            g_path->last_tick = SDL_GetTicks();
+          }
           g_path->path.push_back(screen_pos);
           // Do something with x and y coordinates
         }
@@ -189,19 +207,15 @@ int main(int argc, char* args[])
       }
     }
 
-
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderClear(renderer);
 
+    // drawGrid(renderer, 20, 20, 30);
+
     manager.update();
+    manager.draw(renderer);
 
     SDL_RenderPresent(renderer);
-
-    // frame_time = SDL_GetTicks() - frame_start;
-    // if (frame_time < frame_delay)
-    // {
-    //   SDL_Delay(frame_delay - frame_time);
-    // }
   }
 
   // Clean up and exit

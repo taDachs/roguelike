@@ -1,4 +1,5 @@
 #pragma once
+#include <SDL_render.h>
 #include <array>
 #include <memory>
 #include <vector>
@@ -53,8 +54,9 @@ private:
 class System
 {
 public:
-  virtual bool isApplicable(const Entity& entity) = 0;
-  virtual void update(const Entity& entity)       = 0;
+  virtual bool isApplicable(const Entity& entity) { return true; }
+  virtual void update(const Entity& entity) {}
+  virtual void draw(const Entity& entity, SDL_Renderer* renderer) {}
 };
 
 class Manager
@@ -63,6 +65,7 @@ public:
   EntityID addEntity();
   void addSystem(std::shared_ptr<System> system);
   void update();
+  void draw(SDL_Renderer* renderer);
   Entity& getEntity(EntityID id) const { return *m_entities[id]; }
 
 private:

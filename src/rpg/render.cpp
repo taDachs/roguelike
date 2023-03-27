@@ -9,7 +9,7 @@ bool RenderSystem::isApplicable(const Entity& entity)
   return has_render && has_position;
 }
 
-void RenderSystem::update(const Entity& entity)
+void RenderSystem::draw(const Entity& entity, SDL_Renderer* renderer)
 {
   auto render   = entity.getComponent<RenderComponent>();
   auto position = entity.getComponent<PositionComponent>();
@@ -17,7 +17,7 @@ void RenderSystem::update(const Entity& entity)
   glm::vec3 game_pose(position->pose, 1);
   glm::vec2 screen_pose = m_game_to_screen * game_pose;
 
-  render->sprite->draw(m_renderer,
+  render->sprite->draw(renderer,
                        static_cast<int>(screen_pose.x),
                        static_cast<int>(screen_pose.y),
                        position->orientation == PositionComponent::Orientation::LEFT);

@@ -84,9 +84,7 @@ void PlayerControlSystem::update(const Entity& entity)
   }
 
   if (m_up_pressed || m_down_pressed || m_left_pressed || m_right_pressed) {
-    moveable->is_running = m_shift_pressed;
   } else {
     m_shift_pressed = false;
-    moveable->is_running = false;
   }
 }

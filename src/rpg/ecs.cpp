@@ -22,3 +22,13 @@ void Manager::update() {
     }
   }
 }
+
+void Manager::draw(SDL_Renderer* renderer) {
+  for (const auto& e : m_entities) {
+    for (const auto& s : m_systems) {
+      if (s->isApplicable(*e)) {
+        s->draw(*e, renderer);
+      }
+    }
+  }
+}

@@ -10,13 +10,8 @@ namespace rpg {
 class RenderSystem : public System
 {
 public:
-  RenderSystem(SDL_Renderer* renderer)
-    : m_renderer(renderer)
-    , System()
-  {
-  }
   bool isApplicable(const Entity& entity) override;
-  void update(const Entity& entity) override;
+  void draw(const Entity& entity, SDL_Renderer* renderer) override;
 
   glm::mat3 getScreenToGame() const { return m_screen_to_game; }
   glm::mat3 getGameToScreen() const { return m_game_to_screen; }
@@ -33,7 +28,6 @@ public:
   }
 
 private:
-  SDL_Renderer* m_renderer;
   glm::mat3 m_game_to_screen;
   glm::mat3 m_screen_to_game;
 };

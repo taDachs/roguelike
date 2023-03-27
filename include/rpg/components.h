@@ -3,6 +3,7 @@
 #include "rpg/ecs.h"
 #include "rpg/asset_manager.h"
 #include <glm/glm.hpp>
+#include <queue>
 
 namespace rpg {
 
@@ -25,12 +26,15 @@ struct RenderComponent : public Component {
   std::shared_ptr<Sprite> sprite;
 };
 
+struct StatsComponent : public Component {
+  // in m/s
+  float speed;
+};
+
 struct MoveableComponent : public Component {
   // in m/s
   glm::vec2 current_direction;
-  bool is_running = false;
-  float walking_velocity;
-  float running_velocity;
+  float velocity;
 };
 
 struct AnimationComponent : public Component {
@@ -39,11 +43,6 @@ struct AnimationComponent : public Component {
 };
 
 struct PlayerControlComponent : public Component {};
-
-struct PathFollowingComponent : public Component {
-  std::vector<glm::vec2> path;
-  glm::vec2 goal;
-};
 
 }
 

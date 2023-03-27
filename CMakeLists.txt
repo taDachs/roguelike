@@ -23,6 +23,8 @@ add_library(GAME_LIB
   src/rpg/player_control.cpp
   src/rpg/ecs.cpp
   src/rpg/systems.cpp
+  src/rpg/map.cpp
+  src/rpg/movement.cpp
 )
 # target_include_directories(GAME_LIB)
 target_link_libraries(GAME_LIB SDL2::Main SDL2::TTF SDL2::Image ${GLM_LIBRARIES})
