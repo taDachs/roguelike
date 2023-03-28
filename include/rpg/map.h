@@ -1,12 +1,18 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <memory>
+#include <vector>
 
 namespace rpg {
 
 class Map
 {
 public:
+  Map() = default;
+  Map(int width, int height) : m_width(width), m_height(height) {}
+
+  ~Map() = default;
+
   using Ptr = std::shared_ptr<Map>;
 
   glm::vec2 gridToScreen(const glm::vec2& grid_coord) const;
@@ -33,11 +39,18 @@ public:
   }
   glm::mat3 getScreenToGrid() const { return m_screen_to_grid; }
 
+  // access vector like y * cols + x
+  bool isOccupied(float x, float y) const;
+  bool isOccupied(const glm::vec2& pos) const;
+
 private:
   // square size in m
   float m_resolution;
   glm::mat3 m_grid_to_screen;
   glm::mat3 m_screen_to_grid;
+
+  int m_width;
+  int m_height;
 };
 
 } // namespace rpg

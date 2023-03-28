@@ -22,10 +22,6 @@ struct StateComponent : public Component {
   State state;
 };
 
-struct RenderComponent : public Component {
-  std::shared_ptr<Sprite> sprite;
-};
-
 struct StatsComponent : public Component {
   // in m/s
   float speed;
@@ -37,10 +33,6 @@ struct MoveableComponent : public Component {
   float velocity;
 };
 
-struct AnimationComponent : public Component {
-  std::map<State, Sprite::Ptr> sprite_map;
-  State previous_state;
-};
 
 struct PlayerControlComponent : public Component {};
 

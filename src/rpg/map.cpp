@@ -28,3 +28,14 @@ glm::vec2 Map::screenToReal(const glm::vec2& screen_coord) const {
   glm::vec2 grid_coord = screenToGrid(screen_coord);
   return gridToReal(grid_coord);
 }
+
+bool Map::isOccupied(float x, float y) const {
+  return isOccupied({x, y});
+}
+
+bool Map::isOccupied(const glm::vec2& pos) const {
+  glm::vec2 center(5, 5);
+  float radius = 3;
+
+  return glm::length(pos - center) < radius;
+}

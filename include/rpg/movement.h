@@ -10,6 +10,8 @@ namespace rpg {
 struct PathComponent : public Component {
   std::vector<glm::vec2> path;
   glm::vec2 last_position;
+  glm::vec2 goal;
+  bool reached = true;
   uint last_tick;
 };
 

@@ -17,5 +17,17 @@ private:
   uint m_last_tick;
   uint m_tick_delay = 100;
 };
-}
 
+class GridDrawingComponent : public System
+{
+public:
+  GridDrawingComponent(Map::Ptr map) : m_map(std::move(map)) {}
+  bool isApplicable(const Entity& entity) override;
+  void draw(const Entity& entity, SDL_Renderer* renderer) override;
+private:
+  uint m_last_tick;
+  uint m_tick_delay = 100;
+  Map::Ptr m_map;
+};
+
+}

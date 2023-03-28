@@ -7,6 +7,10 @@
 
 namespace rpg {
 
+struct RenderComponent : public Component {
+  std::shared_ptr<Sprite> sprite;
+};
+
 class RenderSystem : public System
 {
 public:
@@ -16,12 +20,12 @@ public:
   glm::mat3 getScreenToGame() const { return m_screen_to_game; }
   glm::mat3 getGameToScreen() const { return m_game_to_screen; }
 
-  void setScreenToGame(const glm::mat3& mat)
+  void setScreenToGrid(const glm::mat3& mat)
   {
     m_screen_to_game = mat;
     m_game_to_screen = glm::inverse(mat);
   }
-  void setGameToScreen(const glm::mat3& mat)
+  void setGridToScreen(const glm::mat3& mat)
   {
     m_game_to_screen = mat;
     m_screen_to_game = glm::inverse(mat);
@@ -30,6 +34,11 @@ public:
 private:
   glm::mat3 m_game_to_screen;
   glm::mat3 m_screen_to_game;
+};
+
+struct AnimationComponent : public Component {
+  std::map<State, Sprite::Ptr> sprite_map;
+  State previous_state;
 };
 
 class AnimationSystem : public System

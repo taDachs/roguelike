@@ -1,6 +1,7 @@
 #include "rpg/asset_manager.h"
 #include "rpg/components.h"
 #include "rpg/ecs.h"
+#include "rpg/map.h"
 #include "rpg/player_control.h"
 #include "rpg/render.h"
 #include "rpg/systems.h"
@@ -10,6 +11,7 @@
 
 const std::vector<rpg::State> STATES = {"idle", "walking", "running", "shot_1", "dead"};
 auto g_path = std::make_shared<rpg::PathComponent>();
+auto g_pose = std::make_shared<rpg::PositionComponent>();
 
 void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
 {
@@ -65,9 +67,10 @@ rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::Manager& mg)
   rpg::EntityID id    = mg.addEntity();
   rpg::Entity& entity = mg.getEntity(id);
 
-  auto pose    = std::make_shared<rpg::PositionComponent>();
-  pose->pose.x = 10;
-  pose->pose.y = 10;
+  g_pose->pose.x = 0;
+  g_pose->pose.y = 0;
+
+  g_path->reached = true;
 
   auto render    = std::make_shared<rpg::RenderComponent>();
   render->sprite = sm.getSprite("idle");
@@ -88,7 +91,7 @@ rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::Manager& mg)
 
   auto player_control = std::make_shared<rpg::PlayerControlComponent>();
 
-  entity.addComponent(pose);
+  entity.addComponent(g_pose);
   entity.addComponent(render);
   entity.addComponent(animation);
   entity.addComponent(state);
@@ -100,20 +103,7 @@ rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::Manager& mg)
 }
 
 void drawGrid(SDL_Renderer* renderer, int rows, int cols, int grid_size) {
- // Set the renderer color to white
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-  // Draw the grid
-  for (int row = 0; row < rows; row++) {
-      for (int col = 0; col < cols; col++) {
-          // Calculate the position and size of the current cell
-          int x = col * grid_size;
-          int y = row * grid_size;
-          SDL_Rect rect = { x, y, grid_size, grid_size };
-          // Draw the cell
-          SDL_RenderDrawRect(renderer, &rect);
-      }
-  }
 }
 
 int main(int argc, char* args[])
@@ -137,22 +127,26 @@ int main(int argc, char* args[])
 
   rpg::Manager manager;
 
+  auto map = std::make_shared<rpg::Map>();
+
   auto render = std::make_shared<rpg::RenderSystem>();
   glm::mat3 game_to_screen(glm::vec3(20, 0, 0), glm::vec3(0, 20, 0), glm::vec3(0, 0, 1));
-  render->setGameToScreen(game_to_screen);
+  render->setGridToScreen(game_to_screen);
 
   auto animation      = std::make_shared<rpg::AnimationSystem>();
   auto player_control = std::make_shared<rpg::PlayerControlSystem>();
 
   auto moveable = std::make_shared<rpg::MoveableSystem>();
 
-  auto path = std::make_shared<rpg::PathFollowingSystem>();
+  auto path_following = std::make_shared<rpg::PathFollowingSystem>();
+  auto path_planning = std::make_shared<rpg::PathPlanningSystem>(map);
 
   manager.addSystem(render);
   manager.addSystem(animation);
   manager.addSystem(player_control);
   manager.addSystem(moveable);
-  manager.addSystem(path);
+  manager.addSystem(path_following);
+  manager.addSystem(path_planning);
 
   rpg::EntityID soldier_id = initSoldier(sprite_manager, manager);
 
@@ -191,12 +185,16 @@ int main(int argc, char* args[])
           click_pos.y = event.button.y;
           click_pos.z = 1;
 
-          glm::vec2 screen_pos = render->getScreenToGame() * click_pos;
-          std::cout << screen_pos.x << ", " << screen_pos.y << std::endl;
+          glm::vec2 game_pos = render->getScreenToGame() * click_pos;
+          std::cout << game_pos.x << ", " << game_pos.y << std::endl;
           if (g_path->path.empty()) {
             g_path->last_tick = SDL_GetTicks();
+            g_path->last_position = g_pose->pose;
           }
-          g_path->path.push_back(screen_pos);
+          g_path->goal = game_pos;
+          g_path->path.clear();
+          g_path->reached = false;
+          // g_path->path.push_back(game_pos);
           // Do something with x and y coordinates
         }
         // Handle other mouse button clicks as needed

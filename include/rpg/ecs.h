@@ -46,6 +46,11 @@ public:
     return std::static_pointer_cast<T>(m_components[getComponentId<T>()]);
   }
 
+  template <typename T>
+  bool hasComponent() const {
+    return m_components[getComponentId<T>()] != nullptr;
+  }
+
 private:
   EntityID m_id;
   std::array<std::shared_ptr<Component>, MAX_COMPONENTS> m_components;
