@@ -10,8 +10,6 @@
 #include "rpg/movement.h"
 
 const std::vector<rpg::State> STATES = {"idle", "walking", "running", "shot_1", "dead"};
-auto g_path = std::make_shared<rpg::PathComponent>();
-auto g_pose = std::make_shared<rpg::PositionComponent>();
 
 void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
 {
@@ -62,42 +60,36 @@ void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
   sm.addSprite("walking", walk_sprite);
 }
 
-rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::Manager& mg)
+rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::ECSManager& mg)
 {
   rpg::EntityID id    = mg.addEntity();
   rpg::Entity& entity = mg.getEntity(id);
 
-  g_pose->pose.x = 0;
-  g_pose->pose.y = 0;
 
-  g_path->reached = true;
+  auto& pose = entity.addComponent<rpg::PositionComponent>();
+  pose.pose.x = 0;
+  pose.pose.y = 0;
+  auto& path = entity.addComponent<rpg::PathComponent>();
+  path.reached = true;
 
-  auto render    = std::make_shared<rpg::RenderComponent>();
-  render->sprite = sm.getSprite("idle");
+  auto& render    = entity.addComponent<rpg::RenderComponent>();
+  render.sprite = sm.getSprite("idle");
 
-  auto animation = std::make_shared<rpg::AnimationComponent>();
+  auto& animation = entity.addComponent<rpg::AnimationComponent>();
   std::map<rpg::State, std::shared_ptr<rpg::Sprite> > sprite_map;
   for (const auto& state : STATES)
   {
     sprite_map[state] = sm.getSprite(state);
   }
-  animation->sprite_map = sprite_map;
+  animation.sprite_map = sprite_map;
 
-  auto state   = std::make_shared<rpg::StateComponent>();
-  state->state = "idle";
+  auto& state   = entity.addComponent<rpg::StateComponent>();
+  state.state = "idle";
 
-  auto stats                    = std::make_shared<rpg::StatsComponent>();
-  stats->speed = 5;
+  auto& stats                    = entity.addComponent<rpg::StatsComponent>();
+  stats.speed = 5;
 
-  auto player_control = std::make_shared<rpg::PlayerControlComponent>();
-
-  entity.addComponent(g_pose);
-  entity.addComponent(render);
-  entity.addComponent(animation);
-  entity.addComponent(state);
-  // entity.addComponent(player_control);
-  entity.addComponent(g_path);
-  entity.addComponent(stats);
+  // auto& player_control = entity.addComponent<rpg::PlayerControlComponent>();
 
   return id;
 }
@@ -125,7 +117,7 @@ int main(int argc, char* args[])
   rpg::SpriteManager sprite_manager;
   loadSprites(sprite_manager, renderer);
 
-  rpg::Manager manager;
+  rpg::ECSManager manager;
 
   auto map = std::make_shared<rpg::Map>();
 
@@ -147,6 +139,7 @@ int main(int argc, char* args[])
   manager.addSystem(moveable);
   manager.addSystem(path_following);
   manager.addSystem(path_planning);
+
 
   rpg::EntityID soldier_id = initSoldier(sprite_manager, manager);
 
@@ -185,15 +178,19 @@ int main(int argc, char* args[])
           click_pos.y = event.button.y;
           click_pos.z = 1;
 
+          rpg::Entity& soldier = manager.getEntity(soldier_id);
+          auto& path = soldier.getComponent<rpg::PathComponent>();
+          auto& pose = soldier.getComponent<rpg::PositionComponent>();
+
           glm::vec2 game_pos = render->getScreenToGame() * click_pos;
           std::cout << game_pos.x << ", " << game_pos.y << std::endl;
-          if (g_path->path.empty()) {
-            g_path->last_tick = SDL_GetTicks();
-            g_path->last_position = g_pose->pose;
+          if (path.path.empty()) {
+            path.last_tick = SDL_GetTicks();
+            path.last_position = pose.pose;
           }
-          g_path->goal = game_pos;
-          g_path->path.clear();
-          g_path->reached = false;
+          path.goal = game_pos;
+          path.path.clear();
+          path.reached = false;
           // g_path->path.push_back(game_pos);
           // Do something with x and y coordinates
         }

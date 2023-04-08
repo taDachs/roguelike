@@ -2,18 +2,18 @@
 
 using namespace rpg;
 
-EntityID Manager::addEntity() {
+EntityID ECSManager::addEntity() {
   auto e = std::make_unique<Entity>();
   size_t id = m_entities.size();
   m_entities.push_back(std::move(e));
   return id;
 }
 
-void Manager::addSystem(std::shared_ptr<System> system) {
+void ECSManager::addSystem(std::shared_ptr<System> system) {
   m_systems.push_back(std::move(system));
 }
 
-void Manager::update() {
+void ECSManager::update() {
   for (const auto& e : m_entities) {
     for (const auto& s : m_systems) {
       if (s->isApplicable(*e)) {
@@ -23,7 +23,7 @@ void Manager::update() {
   }
 }
 
-void Manager::draw(SDL_Renderer* renderer) {
+void ECSManager::draw(SDL_Renderer* renderer) {
   for (const auto& e : m_entities) {
     for (const auto& s : m_systems) {
       if (s->isApplicable(*e)) {

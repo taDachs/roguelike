@@ -5,15 +5,14 @@ using namespace rpg;
 
 bool PlayerControlSystem::isApplicable(const Entity& entity)
 {
-  bool has_control  = entity.getComponent<PlayerControlComponent>() != nullptr;
-  bool has_moveable = entity.getComponent<MoveableComponent>() != nullptr;
-  return has_control && has_moveable;
+  return entity.hasComponent<PlayerControlComponent>()
+      && entity.hasComponent<MoveableComponent>();
 }
 
 void PlayerControlSystem::update(const Entity& entity)
 {
-  auto control  = entity.getComponent<PlayerControlComponent>();
-  auto moveable = entity.getComponent<MoveableComponent>();
+  auto& control  = entity.getComponent<PlayerControlComponent>();
+  auto& moveable = entity.getComponent<MoveableComponent>();
 
   for (const auto& event : m_buffer)
   {
@@ -62,25 +61,25 @@ void PlayerControlSystem::update(const Entity& entity)
 
   if (m_up_pressed)
   {
-    moveable->current_direction.y = -1;
+    moveable.current_direction.y = -1;
   }
   if (m_down_pressed)
   {
-    moveable->current_direction.y = 1;
+    moveable.current_direction.y = 1;
   }
   if (!m_up_pressed && !m_down_pressed) {
-    moveable->current_direction.y = 0;
+    moveable.current_direction.y = 0;
   }
   if (m_left_pressed)
   {
-    moveable->current_direction.x = -1;
+    moveable.current_direction.x = -1;
   }
   if (m_right_pressed)
   {
-    moveable->current_direction.x = 1;
+    moveable.current_direction.x = 1;
   }
   if (!m_left_pressed && !m_right_pressed) {
-    moveable->current_direction.x = 0;
+    moveable.current_direction.x = 0;
   }
 
   if (m_up_pressed || m_down_pressed || m_left_pressed || m_right_pressed) {

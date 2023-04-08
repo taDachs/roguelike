@@ -8,65 +8,63 @@ using namespace rpg;
 
 bool PathFollowingSystem::isApplicable(const Entity& entity)
 {
-  bool has_path     = entity.getComponent<PathComponent>() != nullptr;
-  bool has_position = entity.getComponent<PositionComponent>() != nullptr;
-  bool has_stats    = entity.getComponent<StatsComponent>() != nullptr;
-  return has_position && has_path && has_stats;
+  return entity.hasComponent<PathComponent>()
+      && entity.hasComponent<PositionComponent>()
+      && entity.hasComponent<StatsComponent>();
 }
 
 void PathFollowingSystem::update(const Entity& entity)
 {
-  auto pose  = entity.getComponent<PositionComponent>();
-  auto path  = entity.getComponent<PathComponent>();
-  auto stats = entity.getComponent<StatsComponent>();
+  auto& pose  = entity.getComponent<PositionComponent>();
+  auto& path  = entity.getComponent<PathComponent>();
+  auto& stats = entity.getComponent<StatsComponent>();
 
-  if (path->path.empty())
+  if (path.path.empty())
   {
-    path->reached = true;
+    path.reached = true;
     return;
   }
 
   uint current_time = SDL_GetTicks();
-  if (glm::length(path->path.at(0) - pose->pose) < m_min_distance)
+  if (glm::length(path.path.at(0) - pose.pose) < m_min_distance)
   {
-    pose->pose = path->path.at(0);
-    path->path.erase(path->path.begin());
-    path->last_position = pose->pose;
-    path->last_tick     = current_time;
+    pose.pose = path.path.at(0);
+    path.path.erase(path.path.begin());
+    path.last_position = pose.pose;
+    path.last_tick     = current_time;
     return;
   }
 
-  glm::vec2 diff = path->path.at(0) - path->last_position;
+  glm::vec2 diff = path.path.at(0) - path.last_position;
   float norm     = glm::length(diff);
 
-  uint time_diff          = current_time - path->last_tick;
-  float traveled_distance = std::fminf(norm, (time_diff / 1000.0) * stats->speed);
+  uint time_diff          = current_time - path.last_tick;
+  float traveled_distance = std::fminf(norm, (time_diff / 1000.0) * stats.speed);
 
-  pose->pose = path->last_position + (traveled_distance / norm) * diff;
+  pose.pose = path.last_position + (traveled_distance / norm) * diff;
 }
 
 bool PathPlanningSystem::isApplicable(const Entity& entity)
 {
-  bool pose = entity.hasComponent<PositionComponent>();
-  bool path = entity.hasComponent<PathComponent>();
-  return pose && path;
+  return entity.hasComponent<PositionComponent>()
+      && entity.hasComponent<PathComponent>();
 }
 
 void PathPlanningSystem::update(const Entity& entity)
 {
-  auto pose = entity.getComponent<PositionComponent>();
-  auto path = entity.getComponent<PathComponent>();
+  auto& pose = entity.getComponent<PositionComponent>();
+  auto& path = entity.getComponent<PathComponent>();
 
-  if (!path->path.empty()) {
+  if (!path.path.empty()) {
     return;
   }
 
-  if (path->goal == pose->pose) {
+  if (path.goal == pose.pose) {
     return;
   }
 
-  std::pair<int, int> start(pose->pose.x, pose->pose.y);
-  std::pair<int, int> goal(path->goal.x, path->goal.y);
+  std::pair<int, int> start(pose.pose.x, pose.pose.y);
+  std::pair<int, int> goal(path.goal.x, path.goal.y);
 
   std::set<std::pair<int, int>> open_set;
   open_set.insert(start);
@@ -132,6 +130,6 @@ void PathPlanningSystem::update(const Entity& entity)
   }
 
   total_path = std::vector<glm::vec2>(total_path.rbegin(), total_path.rend());
-  path->path = total_path;
-  path->reached = false;
+  path.path = total_path;
+  path.reached = false;
 }

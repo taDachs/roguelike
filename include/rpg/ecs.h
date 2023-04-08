@@ -3,11 +3,15 @@
 #include <array>
 #include <memory>
 #include <vector>
+#include <bitset>
 
 namespace rpg {
 
+const size_t MAX_COMPONENTS = 32;
+
 using ComponentID = long long unsigned int;
 using EntityID    = long long unsigned int;
+using ComponentMask = std::bitset<MAX_COMPONENTS>;
 
 class Component
 {
@@ -26,7 +30,18 @@ ComponentID inline getComponentId()
   return component_id;
 }
 
-const size_t MAX_COMPONENTS = 32;
+template <typename T>
+ComponentMask inline getComponentMask()
+{
+  ComponentID id = getComponentId<T>();
+  return 1 << id;
+}
+
+template<typename T>
+void inline addMask(ComponentMask& mask)
+{
+  mask |= getComponentMask<T>();
+}
 
 class Entity
 {
@@ -36,24 +51,27 @@ public:
   {
   }
   template <typename T>
-  void addComponent(std::shared_ptr<T> comp)
+  T& addComponent()
   {
-    m_components[getComponentId<T>()] = comp;
+    m_component_mask |= getComponentMask<T>();
+    m_components[getComponentId<T>()] = std::make_unique<T>();
+    return getComponent<T>();
   }
   template <typename T>
-  std::shared_ptr<T> getComponent() const
+  T& getComponent() const
   {
-    return std::static_pointer_cast<T>(m_components[getComponentId<T>()]);
+    return *static_cast<T*>(m_components[getComponentId<T>()].get());
   }
 
   template <typename T>
   bool hasComponent() const {
-    return m_components[getComponentId<T>()] != nullptr;
+    return (m_component_mask & getComponentMask<T>()).any();
   }
 
 private:
   EntityID m_id;
-  std::array<std::shared_ptr<Component>, MAX_COMPONENTS> m_components;
+  std::array<std::unique_ptr<Component>, MAX_COMPONENTS> m_components;
+  ComponentMask m_component_mask;
 };
 
 class System
@@ -64,7 +82,7 @@ public:
   virtual void draw(const Entity& entity, SDL_Renderer* renderer) {}
 };
 
-class Manager
+class ECSManager
 {
 public:
   EntityID addEntity();

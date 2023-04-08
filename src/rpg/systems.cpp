@@ -8,27 +8,26 @@ const float RUNNING_THRESH = 0.1;
 
 bool MoveableSystem::isApplicable(const Entity& entity)
 {
-  bool has_moveable = entity.getComponent<MoveableComponent>() != nullptr;
-  bool has_position = entity.getComponent<PositionComponent>() != nullptr;
-  return has_moveable && has_position;
+  return entity.hasComponent<MoveableComponent>()
+      && entity.hasComponent<PositionComponent>();
 }
 
 void MoveableSystem::update(const Entity& entity)
 {
-  auto position = entity.getComponent<PositionComponent>();
-  auto moveable = entity.getComponent<MoveableComponent>();
-  auto state    = entity.getComponent<StateComponent>();
-  auto stats    = entity.getComponent<StatsComponent>();
+  auto& position = entity.getComponent<PositionComponent>();
+  auto& moveable = entity.getComponent<MoveableComponent>();
 
-  if (state != nullptr)
+  if (entity.hasComponent<StateComponent>())
   {
-    if (glm::length(moveable->current_direction) > 0 && stats != nullptr)
+    auto state    = entity.getComponent<StateComponent>();
+    if (glm::length(moveable.current_direction) > 0 && entity.hasComponent<StatsComponent>())
     {
-      state->state = (stats->speed - moveable->velocity) < RUNNING_THRESH ? "running" : "walking";
+      auto stats    = entity.getComponent<StatsComponent>();
+      state.state = (stats.speed - moveable.velocity) < RUNNING_THRESH ? "running" : "walking";
     }
     else
     {
-      state->state = "idle";
+      state.state = "idle";
     }
   }
 
@@ -42,16 +41,16 @@ void MoveableSystem::update(const Entity& entity)
 
   float seconds = static_cast<float>(diff) / 1000;
 
-  if (moveable->current_direction.x > 0)
+  if (moveable.current_direction.x > 0)
   {
-    position->orientation = PositionComponent::Orientation::RIGHT;
+    position.orientation = PositionComponent::Orientation::RIGHT;
   }
-  if (moveable->current_direction.x < 0)
+  if (moveable.current_direction.x < 0)
   {
-    position->orientation = PositionComponent::Orientation::LEFT;
+    position.orientation = PositionComponent::Orientation::LEFT;
   }
 
-  position->pose += moveable->current_direction * moveable->velocity * seconds;
+  position.pose += moveable.current_direction * moveable.velocity * seconds;
 }
 
 void GridDrawingComponent::draw(const Entity& entity, SDL_Renderer* renderer)
