@@ -1,15 +1,18 @@
-#include "rpg/asset_manager.h"
 #include "rpg/components.h"
 #include "rpg/ecs.h"
 #include "rpg/map.h"
+#include "rpg/movement.h"
 #include "rpg/player_control.h"
 #include "rpg/render.h"
+#include "rpg/sprite.h"
 #include "rpg/systems.h"
 #include <SDL.h>
 #include <iostream>
-#include "rpg/movement.h"
 
-const std::vector<rpg::State> STATES = {"idle", "walking", "running", "shot_1", "dead"};
+const int SCREEN_WIDTH  = 1200;
+const int SCREEN_HEIGHT = 600;
+
+const int GRID_RESOLUTION = 0.3;
 
 void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
 {
@@ -29,7 +32,7 @@ void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
     std::make_shared<rpg::Sprite>("assets/soldier_1/Hurt.png", renderer, frame_delay, hurt_rect);
   sm.addSprite("hurt", hurt_sprite);
 
-  SDL_Rect idle_rect = {32, 64, 64, 64}; // Example sprite size and position
+  SDL_Rect idle_rect = {32, 0, 64, 128}; // Example sprite size and position
   rpg::Sprite::Ptr idle_sprite =
     std::make_shared<rpg::Sprite>("assets/soldier_1/Idle.png", renderer, frame_delay, idle_rect);
   sm.addSprite("idle", idle_sprite);
@@ -54,7 +57,7 @@ void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
     "assets/soldier_1/Shot_2.png", renderer, frame_delay, shot_2_rect);
   sm.addSprite("shot_2", shot_2_sprite);
 
-  SDL_Rect walk_rect = {40, 64, 64, 64}; // Example sprite size and position
+  SDL_Rect walk_rect = {40, 0, 64, 128}; // Example sprite size and position
   rpg::Sprite::Ptr walk_sprite =
     std::make_shared<rpg::Sprite>("assets/soldier_1/Walk.png", renderer, frame_delay, walk_rect);
   sm.addSprite("walking", walk_sprite);
@@ -66,37 +69,36 @@ rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::ECSManager& mg)
   rpg::Entity& entity = mg.getEntity(id);
 
 
-  auto& pose = entity.addComponent<rpg::PositionComponent>();
-  pose.pose.x = 0;
-  pose.pose.y = 0;
-  auto& path = entity.addComponent<rpg::PathComponent>();
+  auto& pose   = entity.addComponent<rpg::PositionComponent>();
+  pose.pose.x  = 0;
+  pose.pose.y  = 0;
+  auto& path   = entity.addComponent<rpg::PathComponent>();
   path.reached = true;
 
-  auto& render    = entity.addComponent<rpg::RenderComponent>();
+  auto& render  = entity.addComponent<rpg::RenderComponent>();
   render.sprite = sm.getSprite("idle");
 
   auto& animation = entity.addComponent<rpg::AnimationComponent>();
   std::map<rpg::State, std::shared_ptr<rpg::Sprite> > sprite_map;
-  for (const auto& state : STATES)
-  {
-    sprite_map[state] = sm.getSprite(state);
-  }
-  animation.sprite_map = sprite_map;
+  sprite_map[rpg::State::WALKING]  = sm.getSprite("walking");
+  sprite_map[rpg::State::DEAD]     = sm.getSprite("dead");
+  sprite_map[rpg::State::IDLE]     = sm.getSprite("idle");
+  sprite_map[rpg::State::SHOOTING] = sm.getSprite("shot_1");
+  sprite_map[rpg::State::RUNNING]  = sm.getSprite("running");
+  animation.sprite_map             = sprite_map;
 
-  auto& state   = entity.addComponent<rpg::StateComponent>();
-  state.state = "idle";
+  auto& state = entity.addComponent<rpg::StateComponent>();
+  state.state = rpg::State::IDLE;
 
-  auto& stats                    = entity.addComponent<rpg::StatsComponent>();
-  stats.speed = 5;
+  auto& stats = entity.addComponent<rpg::StatsComponent>();
+  stats.speed = 2;
 
   // auto& player_control = entity.addComponent<rpg::PlayerControlComponent>();
 
   return id;
 }
 
-void drawGrid(SDL_Renderer* renderer, int rows, int cols, int grid_size) {
-
-}
+void drawGrid(SDL_Renderer* renderer, int rows, int cols, int grid_size) {}
 
 int main(int argc, char* args[])
 {
@@ -104,8 +106,12 @@ int main(int argc, char* args[])
   SDL_Init(SDL_INIT_VIDEO);
 
   // Create a window
-  SDL_Window* window = SDL_CreateWindow(
-    "My Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_SHOWN);
+  SDL_Window* window = SDL_CreateWindow("My Window",
+                                        SDL_WINDOWPOS_UNDEFINED,
+                                        SDL_WINDOWPOS_UNDEFINED,
+                                        SCREEN_WIDTH,
+                                        SCREEN_HEIGHT,
+                                        SDL_WINDOW_SHOWN);
 
   SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
 
@@ -120,18 +126,22 @@ int main(int argc, char* args[])
   rpg::ECSManager manager;
 
   auto map = std::make_shared<rpg::Map>();
+  map->loadOccupancyFromFile("./assets/map.txt", 0.3);
 
-  auto render = std::make_shared<rpg::RenderSystem>();
-  glm::mat3 game_to_screen(glm::vec3(20, 0, 0), glm::vec3(0, 20, 0), glm::vec3(0, 0, 1));
-  render->setGridToScreen(game_to_screen);
+  auto render = std::make_shared<rpg::RenderSystem>(map);
+  glm::mat3 game_to_screen(glm::vec3(SCREEN_WIDTH / map->getWidth(), 0, 0),
+                           glm::vec3(0, SCREEN_HEIGHT / map->getHeight(), 0),
+                           glm::vec3(0, 0, 1));
+  map->setGridToScreen(game_to_screen);
+  map->print();
 
   auto animation      = std::make_shared<rpg::AnimationSystem>();
   auto player_control = std::make_shared<rpg::PlayerControlSystem>();
 
   auto moveable = std::make_shared<rpg::MoveableSystem>();
 
-  auto path_following = std::make_shared<rpg::PathFollowingSystem>();
-  auto path_planning = std::make_shared<rpg::PathPlanningSystem>(map);
+  auto path_following = std::make_shared<rpg::PathFollowingSystem>(map);
+  auto path_planning  = std::make_shared<rpg::PathPlanningSystem>(map);
 
   manager.addSystem(render);
   manager.addSystem(animation);
@@ -179,16 +189,13 @@ int main(int argc, char* args[])
           click_pos.z = 1;
 
           rpg::Entity& soldier = manager.getEntity(soldier_id);
-          auto& path = soldier.getComponent<rpg::PathComponent>();
-          auto& pose = soldier.getComponent<rpg::PositionComponent>();
+          auto& path           = soldier.getComponent<rpg::PathComponent>();
+          auto& pose           = soldier.getComponent<rpg::PositionComponent>();
 
-          glm::vec2 game_pos = render->getScreenToGame() * click_pos;
-          std::cout << game_pos.x << ", " << game_pos.y << std::endl;
-          if (path.path.empty()) {
-            path.last_tick = SDL_GetTicks();
-            path.last_position = pose.pose;
-          }
-          path.goal = game_pos;
+          glm::vec2 game_pos = map->screenToReal(click_pos);
+          path.last_tick     = SDL_GetTicks();
+          path.last_position = pose.pose;
+          path.goal          = game_pos;
           path.path.clear();
           path.reached = false;
           // g_path->path.push_back(game_pos);
@@ -207,6 +214,7 @@ int main(int argc, char* args[])
 
     // drawGrid(renderer, 20, 20, 30);
 
+    map->draw(renderer);
     manager.update();
     manager.draw(renderer);
 

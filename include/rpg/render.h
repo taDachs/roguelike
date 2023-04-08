@@ -2,41 +2,35 @@
 
 #include "rpg/components.h"
 #include "rpg/ecs.h"
+#include "rpg/map.h"
+#include "rpg/sprite.h"
 #include <SDL.h>
 #include <glm/glm.hpp>
+#include <utility>
 
 namespace rpg {
 
-struct RenderComponent : public Component {
+struct RenderComponent : public Component
+{
   std::shared_ptr<Sprite> sprite;
 };
 
 class RenderSystem : public System
 {
 public:
+  RenderSystem(std::shared_ptr<Map> map)
+    : m_map(std::move(map))
+  {
+  }
   bool isApplicable(const Entity& entity) override;
   void draw(const Entity& entity, SDL_Renderer* renderer) override;
 
-  glm::mat3 getScreenToGame() const { return m_screen_to_game; }
-  glm::mat3 getGameToScreen() const { return m_game_to_screen; }
-
-  void setScreenToGrid(const glm::mat3& mat)
-  {
-    m_screen_to_game = mat;
-    m_game_to_screen = glm::inverse(mat);
-  }
-  void setGridToScreen(const glm::mat3& mat)
-  {
-    m_game_to_screen = mat;
-    m_screen_to_game = glm::inverse(mat);
-  }
-
 private:
-  glm::mat3 m_game_to_screen;
-  glm::mat3 m_screen_to_game;
+  std::shared_ptr<Map> m_map;
 };
 
-struct AnimationComponent : public Component {
+struct AnimationComponent : public Component
+{
   std::map<State, Sprite::Ptr> sprite_map;
   State previous_state;
 };

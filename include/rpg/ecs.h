@@ -1,16 +1,16 @@
 #pragma once
 #include <SDL_render.h>
 #include <array>
+#include <bitset>
 #include <memory>
 #include <vector>
-#include <bitset>
 
 namespace rpg {
 
 const size_t MAX_COMPONENTS = 32;
 
-using ComponentID = long long unsigned int;
-using EntityID    = long long unsigned int;
+using ComponentID   = long long unsigned int;
+using EntityID      = long long unsigned int;
 using ComponentMask = std::bitset<MAX_COMPONENTS>;
 
 class Component
@@ -37,7 +37,7 @@ ComponentMask inline getComponentMask()
   return 1 << id;
 }
 
-template<typename T>
+template <typename T>
 void inline addMask(ComponentMask& mask)
 {
   mask |= getComponentMask<T>();
@@ -64,7 +64,8 @@ public:
   }
 
   template <typename T>
-  bool hasComponent() const {
+  bool hasComponent() const
+  {
     return (m_component_mask & getComponentMask<T>()).any();
   }
 

@@ -5,8 +5,7 @@ using namespace rpg;
 
 bool PlayerControlSystem::isApplicable(const Entity& entity)
 {
-  return entity.hasComponent<PlayerControlComponent>()
-      && entity.hasComponent<MoveableComponent>();
+  return entity.hasComponent<PlayerControlComponent>() && entity.hasComponent<MoveableComponent>();
 }
 
 void PlayerControlSystem::update(const Entity& entity)
@@ -67,7 +66,8 @@ void PlayerControlSystem::update(const Entity& entity)
   {
     moveable.current_direction.y = 1;
   }
-  if (!m_up_pressed && !m_down_pressed) {
+  if (!m_up_pressed && !m_down_pressed)
+  {
     moveable.current_direction.y = 0;
   }
   if (m_left_pressed)
@@ -78,12 +78,16 @@ void PlayerControlSystem::update(const Entity& entity)
   {
     moveable.current_direction.x = 1;
   }
-  if (!m_left_pressed && !m_right_pressed) {
+  if (!m_left_pressed && !m_right_pressed)
+  {
     moveable.current_direction.x = 0;
   }
 
-  if (m_up_pressed || m_down_pressed || m_left_pressed || m_right_pressed) {
-  } else {
+  if (m_up_pressed || m_down_pressed || m_left_pressed || m_right_pressed)
+  {
+  }
+  else
+  {
     m_shift_pressed = false;
   }
 }

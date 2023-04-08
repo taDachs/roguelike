@@ -73,7 +73,8 @@ public:
   {
     std::vector<std::string> out;
     out.reserve(m_sprites.size());
-    for (const auto& p : m_sprites) {
+    for (const auto& p : m_sprites)
+    {
       out.push_back(p.first);
     }
     return out;

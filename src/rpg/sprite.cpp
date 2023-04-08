@@ -1,10 +1,16 @@
-#include "rpg/asset_manager.h"
+#include "rpg/sprite.h"
 #include <SDL_image.h>
 #include <iostream>
 
 using namespace rpg;
 
-Sprite::Sprite(const std::string& filename, SDL_Renderer* renderer, int frame_width, int frame_height, int num_frames, int frame_delay, const SDL_Rect& sprite_rect)
+Sprite::Sprite(const std::string& filename,
+               SDL_Renderer* renderer,
+               int frame_width,
+               int frame_height,
+               int num_frames,
+               int frame_delay,
+               const SDL_Rect& sprite_rect)
   : m_current_frame(0)
   , m_frame_delay(frame_delay)
   , m_frame_time(SDL_GetTicks())
@@ -29,14 +35,18 @@ Sprite::Sprite(const std::string& filename, SDL_Renderer* renderer, int frame_wi
   // Split the image into frames and create textures for each frame
   for (int i = 0; i < num_frames; i++)
   {
-    SDL_Rect frame_rect = {i * frame_width + sprite_rect.x, sprite_rect.h, sprite_rect.w, sprite_rect.h};
+    SDL_Rect frame_rect = {
+      i * frame_width + sprite_rect.x, sprite_rect.h, sprite_rect.w, sprite_rect.h};
     m_frames.push_back(frame_rect);
   }
 
   SDL_FreeSurface(surface);
 }
 
-Sprite::Sprite(const std::string& filename, SDL_Renderer* renderer, int frame_delay, const SDL_Rect& sprite_rect)
+Sprite::Sprite(const std::string& filename,
+               SDL_Renderer* renderer,
+               int frame_delay,
+               const SDL_Rect& sprite_rect)
   : m_current_frame(0)
   , m_frame_delay(frame_delay)
   , m_frame_time(SDL_GetTicks())
@@ -120,9 +130,10 @@ void Sprite::update()
 {
   // Update the current frame based on the frame delay
   uint current_time = SDL_GetTicks();
-  uint diff = current_time - m_frame_time;
+  uint diff         = current_time - m_frame_time;
 
-  if (diff > m_frame_delay) {
+  if (diff > m_frame_delay)
+  {
     m_current_frame += diff / m_frame_delay;
     m_current_frame %= m_frames.size();
     m_frame_time = current_time;
@@ -132,23 +143,36 @@ void Sprite::update()
 void Sprite::draw(SDL_Renderer* renderer, int x, int y, bool flipped)
 {
   // Draw the current frame of the sprite at the given position
-  SDL_Rect dst_rect = {x, y, m_frames[m_current_frame].w, m_frames[m_current_frame].h};
-  if (flipped) {
-    SDL_RenderCopyEx(renderer, m_texture, &m_frames[m_current_frame], &dst_rect, 0, nullptr, SDL_FLIP_HORIZONTAL);
-  } else {
+  SDL_Rect dst_rect = {x - m_frames[m_current_frame].w / 2,
+                       y - m_frames[m_current_frame].h,
+                       m_frames[m_current_frame].w,
+                       m_frames[m_current_frame].h};
+  if (flipped)
+  {
+    SDL_RenderCopyEx(
+      renderer, m_texture, &m_frames[m_current_frame], &dst_rect, 0, nullptr, SDL_FLIP_HORIZONTAL);
+  }
+  else
+  {
     SDL_RenderCopy(renderer, m_texture, &m_frames[m_current_frame], &dst_rect);
   }
+  // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
+  // SDL_RenderFillRect(renderer, &dst_rect);
+  SDL_Rect base = {x - 5, y - 5, 10, 10};
+  SDL_SetRenderDrawColor(renderer, 0, 0, 255, 0);
+  SDL_RenderFillRect(renderer, &base);
 }
 
 void Sprite::reset()
 {
   m_current_frame = 0;
-  m_frame_time = SDL_GetTicks();
+  m_frame_time    = SDL_GetTicks();
 }
 
 
 // Load a sprite from a file
-void SpriteManager::addSprite(const std::string& sprite_name, const Sprite::Ptr& sprite) {
+void SpriteManager::addSprite(const std::string& sprite_name, const Sprite::Ptr& sprite)
+{
   m_sprites[sprite_name] = sprite;
 }
 

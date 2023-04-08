@@ -8,8 +8,7 @@ const float RUNNING_THRESH = 0.1;
 
 bool MoveableSystem::isApplicable(const Entity& entity)
 {
-  return entity.hasComponent<MoveableComponent>()
-      && entity.hasComponent<PositionComponent>();
+  return entity.hasComponent<MoveableComponent>() && entity.hasComponent<PositionComponent>();
 }
 
 void MoveableSystem::update(const Entity& entity)
@@ -19,15 +18,16 @@ void MoveableSystem::update(const Entity& entity)
 
   if (entity.hasComponent<StateComponent>())
   {
-    auto state    = entity.getComponent<StateComponent>();
+    auto state = entity.getComponent<StateComponent>();
     if (glm::length(moveable.current_direction) > 0 && entity.hasComponent<StatsComponent>())
     {
-      auto stats    = entity.getComponent<StatsComponent>();
-      state.state = (stats.speed - moveable.velocity) < RUNNING_THRESH ? "running" : "walking";
+      auto stats = entity.getComponent<StatsComponent>();
+      state.state =
+        (stats.speed - moveable.velocity) < RUNNING_THRESH ? State::RUNNING : State::WALKING;
     }
     else
     {
-      state.state = "idle";
+      state.state = State::IDLE;
     }
   }
 
@@ -71,4 +71,3 @@ void GridDrawingComponent::draw(const Entity& entity, SDL_Renderer* renderer)
   //     }
   // }
 }
-

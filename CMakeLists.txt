@@ -18,7 +18,7 @@ find_package(glm REQUIRED)
 include_directories(${Boost_INCLUDE_DIR} ${SDL2_INCLUDE_DIRS} include)
 
 add_library(GAME_LIB
-  src/rpg/asset_manager.cpp
+  src/rpg/sprite.cpp
   src/rpg/render.cpp
   src/rpg/player_control.cpp
   src/rpg/ecs.cpp
