@@ -91,6 +91,7 @@ public:
   void update();
   void draw(SDL_Renderer* renderer);
   Entity& getEntity(EntityID id) const { return *m_entities[id]; }
+  void cleanUp();
 
 private:
   std::vector<std::unique_ptr<Entity> > m_entities;

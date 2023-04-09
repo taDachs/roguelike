@@ -79,6 +79,7 @@ void Map::loadOccupancyFromFile(const std::string& filename, float resolution)
     // std::cout << std::endl;
     height++;
   }
+  f.close();
 
   m_height = height;
   // std::cout << m_occupancy << std::endl;

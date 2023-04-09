@@ -8,7 +8,7 @@
 
 namespace rpg {
 
-const size_t MAX_MAP_SIZE = 1024L;
+const size_t MAX_MAP_SIZE = 4096;
 
 class Map
 {

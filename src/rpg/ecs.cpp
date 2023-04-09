@@ -42,3 +42,9 @@ void ECSManager::draw(SDL_Renderer* renderer)
     }
   }
 }
+
+void ECSManager::cleanUp()
+{
+  m_entities.clear();
+  m_systems.clear();
+}

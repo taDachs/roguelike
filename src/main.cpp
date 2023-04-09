@@ -7,6 +7,7 @@
 #include "rpg/sprite.h"
 #include "rpg/systems.h"
 #include <SDL.h>
+#include <SDL_image.h>
 #include <iostream>
 
 const int SCREEN_WIDTH  = 1200;
@@ -68,7 +69,6 @@ rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::ECSManager& mg)
   rpg::EntityID id    = mg.addEntity();
   rpg::Entity& entity = mg.getEntity(id);
 
-
   auto& pose   = entity.addComponent<rpg::PositionComponent>();
   pose.pose.x  = 0;
   pose.pose.y  = 0;
@@ -103,7 +103,15 @@ void drawGrid(SDL_Renderer* renderer, int rows, int cols, int grid_size) {}
 int main(int argc, char* args[])
 {
   // Initialize SDL
-  SDL_Init(SDL_INIT_VIDEO);
+  if (SDL_Init(SDL_INIT_VIDEO)) {
+    printf("Failed to initialize SDL: %s\n", SDL_GetError());
+    return 1;
+  }
+
+  if (!IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG)) {
+    printf("Failed to initialize SDL_Image: %s\n", SDL_GetError());
+    return 1;
+  }
 
   // Create a window
   SDL_Window* window = SDL_CreateWindow("My Window",
@@ -133,7 +141,6 @@ int main(int argc, char* args[])
                            glm::vec3(0, SCREEN_HEIGHT / map->getHeight(), 0),
                            glm::vec3(0, 0, 1));
   map->setGridToScreen(game_to_screen);
-  map->print();
 
   auto animation      = std::make_shared<rpg::AnimationSystem>();
   auto player_control = std::make_shared<rpg::PlayerControlSystem>();
@@ -220,8 +227,9 @@ int main(int argc, char* args[])
 
     SDL_RenderPresent(renderer);
   }
-
   // Clean up and exit
+  manager.cleanUp();
+  SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
   SDL_Quit();
   return 0;

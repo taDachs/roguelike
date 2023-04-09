@@ -12,7 +12,7 @@ namespace rpg {
 
 struct RenderComponent : public Component
 {
-  std::shared_ptr<Sprite> sprite;
+  Sprite::Ptr sprite;
 };
 
 class RenderSystem : public System
