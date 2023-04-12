@@ -1,6 +1,9 @@
 #pragma once
+#include "rpg/ecs.h"
+#include "rpg/tilemap.h"
 #include <SDL.h>
 #include <bitset>
+#include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <iostream>
 #include <memory>
@@ -24,14 +27,9 @@ public:
 
   using Ptr = std::shared_ptr<Map>;
 
-  glm::vec2 gridToScreen(const glm::vec2& grid_coord) const;
-  glm::vec2 screenToGrid(const glm::vec2& screen_coord) const;
   // real means in m
   glm::vec2 gridToReal(const glm::vec2& grid_coord) const;
   glm::vec2 realToGrid(const glm::vec2& real_coord) const;
-
-  glm::vec2 realToScreen(const glm::vec2& real_coord) const;
-  glm::vec2 screenToReal(const glm::vec2& screen_coord) const;
 
   int getWidth() const { return m_width; }
   int getHeight() const { return m_height; }
@@ -39,56 +37,19 @@ public:
   void setResolution(float resolution) { m_resolution = resolution; }
   float getResolution() const { return m_resolution; }
 
-  void setGridToScreen(const glm::mat3& grid_to_screen)
-  {
-    m_grid_to_screen = grid_to_screen;
-    m_screen_to_grid = glm::inverse(grid_to_screen);
-  }
-  glm::mat3 getGridToScreen() const { return m_grid_to_screen; }
-
-  void setScreenToGrid(const glm::mat3& screen_to_grid)
-  {
-    m_screen_to_grid = screen_to_grid;
-    m_grid_to_screen = glm::inverse(screen_to_grid);
-  }
-  glm::mat3 getScreenToGrid() const { return m_screen_to_grid; }
-
   // access vector like y * cols + x
   bool isOccupied(float x, float y) const;
   bool isOccupied(const glm::vec2& pos) const;
 
   void loadOccupancyFromFile(const std::string& filename, float resolution);
 
-  void draw(SDL_Renderer* renderer) const;
+  void addTileEntities(entt::registry& registry, TileManager& tm) const;
 
-  void print() const
-  {
-    for (int y = 0; y < m_height; ++y)
-    {
-      for (int x = 0; x < m_width; ++x)
-      {
-        glm::vec2 grid_pose(x, y);
-        size_t index = x + y * m_width;
-
-        if (m_occupancy[index])
-        {
-          std::cout << "x";
-        }
-        else
-        {
-          std::cout << "o";
-        }
-      }
-      std::cout << "\n";
-    }
-    std::cout << std::endl;
-  }
+  std::vector<glm::vec2> findPath(glm::vec2 start, glm::vec2 goal) const;
 
 private:
   // m / cell
   float m_resolution;
-  glm::mat3 m_grid_to_screen;
-  glm::mat3 m_screen_to_grid;
 
   // in cells
   int m_width;

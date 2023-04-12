@@ -1,13 +1,18 @@
+#include "rpg/attack_system.h"
+#include "rpg/camera.h"
 #include "rpg/components.h"
 #include "rpg/ecs.h"
+#include "rpg/game.h"
 #include "rpg/map.h"
 #include "rpg/movement.h"
-#include "rpg/player_control.h"
 #include "rpg/render.h"
 #include "rpg/sprite.h"
 #include "rpg/systems.h"
+#include "rpg/task_queue.h"
+#include "rpg/tilemap.h"
 #include <SDL.h>
 #include <SDL_image.h>
+#include <entt/entt.hpp>
 #include <iostream>
 
 const int SCREEN_WIDTH  = 1200;
@@ -15,70 +20,52 @@ const int SCREEN_HEIGHT = 600;
 
 const int GRID_RESOLUTION = 0.3;
 
-void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
+void loadTiles(rpg::TileManager& tm, SDL_Renderer* renderer)
 {
-  int frame_delay                = 100;
-  SDL_Rect attack_rect           = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr attack_sprite = std::make_shared<rpg::Sprite>(
-    "assets/soldier_1/Attack.png", renderer, frame_delay, attack_rect);
-  sm.addSprite("attack", attack_sprite);
-
-  SDL_Rect dead_rect = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr dead_sprite =
-    std::make_shared<rpg::Sprite>("assets/soldier_1/Dead.png", renderer, frame_delay, dead_rect);
-  sm.addSprite("dead", dead_sprite);
-
-  SDL_Rect hurt_rect = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr hurt_sprite =
-    std::make_shared<rpg::Sprite>("assets/soldier_1/Hurt.png", renderer, frame_delay, hurt_rect);
-  sm.addSprite("hurt", hurt_sprite);
-
-  SDL_Rect idle_rect = {32, 0, 64, 128}; // Example sprite size and position
-  rpg::Sprite::Ptr idle_sprite =
-    std::make_shared<rpg::Sprite>("assets/soldier_1/Idle.png", renderer, frame_delay, idle_rect);
-  sm.addSprite("idle", idle_sprite);
-
-  SDL_Rect recharge_rect           = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr recharge_sprite = std::make_shared<rpg::Sprite>(
-    "assets/soldier_1/Recharge.png", renderer, frame_delay, recharge_rect);
-  sm.addSprite("recharge", recharge_sprite);
-
-  SDL_Rect run_rect = {40, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr run_sprite =
-    std::make_shared<rpg::Sprite>("assets/soldier_1/Run.png", renderer, frame_delay, run_rect);
-  sm.addSprite("running", run_sprite);
-
-  SDL_Rect shot_1_rect           = {32, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr shot_1_sprite = std::make_shared<rpg::Sprite>(
-    "assets/soldier_1/Shot_1.png", renderer, frame_delay, shot_1_rect);
-  sm.addSprite("shot_1", shot_1_sprite);
-
-  SDL_Rect shot_2_rect           = {40, 64, 64, 64}; // Example sprite size and position
-  rpg::Sprite::Ptr shot_2_sprite = std::make_shared<rpg::Sprite>(
-    "assets/soldier_1/Shot_2.png", renderer, frame_delay, shot_2_rect);
-  sm.addSprite("shot_2", shot_2_sprite);
-
-  SDL_Rect walk_rect = {40, 0, 64, 128}; // Example sprite size and position
-  rpg::Sprite::Ptr walk_sprite =
-    std::make_shared<rpg::Sprite>("assets/soldier_1/Walk.png", renderer, frame_delay, walk_rect);
-  sm.addSprite("walking", walk_sprite);
+  tm.addTile("occupied", "assets/tiles/black.png", renderer);
+  tm.addTile("free", "assets/tiles/white.png", renderer);
 }
 
-rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::ECSManager& mg)
-{
-  rpg::EntityID id    = mg.addEntity();
-  rpg::Entity& entity = mg.getEntity(id);
 
-  auto& pose   = entity.addComponent<rpg::PositionComponent>();
+void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
+{
+  int frame_delay = 100;
+  sm.addSprite("attack", "assets/soldier_1/Attack.png", frame_delay, renderer);
+  sm.addSprite("dead", "assets/soldier_1/Dead.png", frame_delay, renderer, false);
+  sm.addSprite("hurt", "assets/soldier_1/Hurt.png", frame_delay, renderer);
+  sm.addSprite("idle", "assets/soldier_1/Idle.png", frame_delay, renderer);
+  sm.addSprite("recharge", "assets/soldier_1/Recharge.png", frame_delay, renderer);
+  sm.addSprite("running", "assets/soldier_1/Run.png", frame_delay, renderer);
+  sm.addSprite("shot_1", "assets/soldier_1/Shot_1.png", 12, renderer);
+  sm.addSprite("shot_2", "assets/soldier_1/Shot_2.png", frame_delay, renderer);
+  sm.addSprite("walking", "assets/soldier_1/Walk.png", frame_delay, renderer);
+}
+
+entt::entity initGun(entt::registry& registry, rpg::SpriteManager& sm)
+{
+  entt::entity entity = registry.create();
+
+  auto& weapon  = registry.emplace<rpg::WeaponComponent>(entity);
+  weapon.damage = 5;
+  weapon.speed  = 50;
+  weapon.range  = 5;
+
+  return entity;
+}
+
+entt::entity initSoldier(entt::registry& registry, rpg::SpriteManager& sm)
+{
+  entt::entity entity = registry.create();
+
+  auto& pose   = registry.emplace<rpg::PositionComponent>(entity);
   pose.pose.x  = 0;
   pose.pose.y  = 0;
-  auto& path   = entity.addComponent<rpg::PathComponent>();
-  path.reached = true;
+  auto& path   = registry.emplace<rpg::PathComponent>(entity);
 
-  auto& render  = entity.addComponent<rpg::RenderComponent>();
+  auto& render  = registry.emplace<rpg::SpriteComponent>(entity);
   render.sprite = sm.getSprite("idle");
 
-  auto& animation = entity.addComponent<rpg::AnimationComponent>();
+  auto& animation = registry.emplace<rpg::AnimationStateComponent>(entity);
   std::map<rpg::State, std::shared_ptr<rpg::Sprite> > sprite_map;
   sprite_map[rpg::State::WALKING]  = sm.getSprite("walking");
   sprite_map[rpg::State::DEAD]     = sm.getSprite("dead");
@@ -87,15 +74,24 @@ rpg::EntityID initSoldier(rpg::SpriteManager& sm, rpg::ECSManager& mg)
   sprite_map[rpg::State::RUNNING]  = sm.getSprite("running");
   animation.sprite_map             = sprite_map;
 
-  auto& state = entity.addComponent<rpg::StateComponent>();
+  auto& state = registry.emplace<rpg::StateComponent>(entity);
   state.state = rpg::State::IDLE;
 
-  auto& stats = entity.addComponent<rpg::StatsComponent>();
+  auto& stats = registry.emplace<rpg::StatsComponent>(entity);
   stats.speed = 2;
 
+  auto& task_queue = registry.emplace<rpg::TaskQueueComponent>(entity);
+
+  auto& health  = registry.emplace<rpg::HealthComponent>(entity);
+  health.health = 100;
   // auto& player_control = entity.addComponent<rpg::PlayerControlComponent>();
 
-  return id;
+  entt::entity gun = initGun(registry, sm);
+
+  auto& inventory = registry.emplace<rpg::InventoryComponent>(entity);
+  inventory.equipped.push_back(gun);
+
+  return entity;
 }
 
 void drawGrid(SDL_Renderer* renderer, int rows, int cols, int grid_size) {}
@@ -103,12 +99,14 @@ void drawGrid(SDL_Renderer* renderer, int rows, int cols, int grid_size) {}
 int main(int argc, char* args[])
 {
   // Initialize SDL
-  if (SDL_Init(SDL_INIT_VIDEO)) {
+  if (SDL_Init(SDL_INIT_VIDEO))
+  {
     printf("Failed to initialize SDL: %s\n", SDL_GetError());
     return 1;
   }
 
-  if (!IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG)) {
+  if (!IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG))
+  {
     printf("Failed to initialize SDL_Image: %s\n", SDL_GetError());
     return 1;
   }
@@ -130,35 +128,57 @@ int main(int argc, char* args[])
 
   rpg::SpriteManager sprite_manager;
   loadSprites(sprite_manager, renderer);
+  rpg::TileManager tile_manager;
+  loadTiles(tile_manager, renderer);
 
-  rpg::ECSManager manager;
+  entt::registry registry;
 
-  auto map = std::make_shared<rpg::Map>();
-  map->loadOccupancyFromFile("./assets/map.txt", 0.3);
+  rpg::Game::map.loadOccupancyFromFile("./assets/map.txt", 0.3);
 
-  auto render = std::make_shared<rpg::RenderSystem>(map);
-  glm::mat3 game_to_screen(glm::vec3(SCREEN_WIDTH / map->getWidth(), 0, 0),
-                           glm::vec3(0, SCREEN_HEIGHT / map->getHeight(), 0),
-                           glm::vec3(0, 0, 1));
-  map->setGridToScreen(game_to_screen);
+  rpg::Game::map.addTileEntities(registry, tile_manager);
 
-  auto animation      = std::make_shared<rpg::AnimationSystem>();
-  auto player_control = std::make_shared<rpg::PlayerControlSystem>();
+  glm::mat3 game_to_screen(
+    glm::vec3(SCREEN_WIDTH / (rpg::Game::map.getWidth() * rpg::Game::map.getResolution()), 0, 0),
+    glm::vec3(0, SCREEN_HEIGHT / (rpg::Game::map.getHeight() * rpg::Game::map.getResolution()), 0),
+    glm::vec3(0, 0, 1));
+  rpg::Camera camera;
+  camera.setRealToScreen(game_to_screen);
 
-  auto moveable = std::make_shared<rpg::MoveableSystem>();
+  auto sprite_render = std::make_shared<rpg::SpriteSystem>();
+  auto tilemap       = std::make_shared<rpg::TileSystem>();
+  auto state       = std::make_shared<rpg::StateSystem>();
 
-  auto path_following = std::make_shared<rpg::PathFollowingSystem>(map);
-  auto path_planning  = std::make_shared<rpg::PathPlanningSystem>(map);
+  auto animation = std::make_shared<rpg::AnimationStateSystem>();
 
-  manager.addSystem(render);
-  manager.addSystem(animation);
-  manager.addSystem(player_control);
-  manager.addSystem(moveable);
-  manager.addSystem(path_following);
-  manager.addSystem(path_planning);
+  auto path_following = std::make_shared<rpg::PathFollowingSystem>();
 
+  auto task_queue    = std::make_shared<rpg::TaskQueueSystem>();
+  auto health_system = std::make_shared<rpg::HealthSystem>();
+  auto attack_system = std::make_shared<rpg::AttackSystem>();
 
-  rpg::EntityID soldier_id = initSoldier(sprite_manager, manager);
+  rpg::SystemRunner system_runner;
+
+  system_runner.addSystem(sprite_render);
+  system_runner.addSystem(tilemap);
+  system_runner.addSystem(state);
+  system_runner.addSystem(animation);
+  system_runner.addSystem(path_following);
+  system_runner.addSystem(task_queue);
+  system_runner.addSystem(health_system);
+  system_runner.addSystem(attack_system);
+
+  entt::entity friendly_soldier_id = initSoldier(registry, sprite_manager);
+  entt::entity enemy_soldier_id    = initSoldier(registry, sprite_manager);
+  entt::entity gun_id              = initGun(registry, sprite_manager);
+
+  auto& friendly_pose  = registry.get<rpg::PositionComponent>(friendly_soldier_id);
+  friendly_pose.pose.x = 5;
+  friendly_pose.pose.y = 4;
+
+  auto& enemy_pose       = registry.get<rpg::PositionComponent>(enemy_soldier_id);
+  enemy_pose.pose.x      = 10;
+  enemy_pose.pose.y      = 4;
+  enemy_pose.orientation = rpg::PositionComponent::Orientation::LEFT;
 
   int fps         = 10;
   int frame_delay = 1000 / fps;
@@ -180,10 +200,6 @@ int main(int argc, char* args[])
 
     while (SDL_PollEvent(&event))
     {
-      if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
-      {
-        player_control->addEvent(event);
-      }
       if (event.type == SDL_MOUSEBUTTONDOWN)
       {
         // Handle mouse click
@@ -195,20 +211,28 @@ int main(int argc, char* args[])
           click_pos.y = event.button.y;
           click_pos.z = 1;
 
-          rpg::Entity& soldier = manager.getEntity(soldier_id);
-          auto& path           = soldier.getComponent<rpg::PathComponent>();
-          auto& pose           = soldier.getComponent<rpg::PositionComponent>();
-
-          glm::vec2 game_pos = map->screenToReal(click_pos);
-          path.last_tick     = SDL_GetTicks();
-          path.last_position = pose.pose;
-          path.goal          = game_pos;
-          path.path.clear();
-          path.reached = false;
-          // g_path->path.push_back(game_pos);
-          // Do something with x and y coordinates
+          glm::vec2 game_pos = camera.screenToReal(click_pos);
+          auto move_task =
+            std::make_unique<rpg::MoveTask>(game_pos, rpg::Game::map.getResolution());
+          auto& queue = registry.get<rpg::TaskQueueComponent>(friendly_soldier_id);
+          queue.queue.push(std::move(move_task));
         }
-        // Handle other mouse button clicks as needed
+        if (event.button.button == SDL_BUTTON_RIGHT)
+        {
+          // Handle left mouse button click
+          glm::vec3 click_pos;
+          click_pos.x        = event.button.x;
+          click_pos.y        = event.button.y;
+          click_pos.z        = 1;
+          glm::vec2 game_pos = camera.screenToReal(click_pos);
+
+          auto& queue = registry.get<rpg::TaskQueueComponent>(friendly_soldier_id);
+
+          auto attack_task   = std::make_unique<rpg::AttackTask>(enemy_soldier_id);
+          queue.queue        = {};
+          queue.current_task = nullptr;
+          queue.queue.push(std::move(attack_task));
+        }
       }
       if (event.type == SDL_QUIT)
       {
@@ -221,14 +245,13 @@ int main(int argc, char* args[])
 
     // drawGrid(renderer, 20, 20, 30);
 
-    map->draw(renderer);
-    manager.update();
-    manager.draw(renderer);
+    // map->draw(renderer);
+    system_runner.update(registry);
+    system_runner.draw(registry, renderer, camera);
 
     SDL_RenderPresent(renderer);
   }
   // Clean up and exit
-  manager.cleanUp();
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
   SDL_Quit();

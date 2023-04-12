@@ -10,35 +10,30 @@
 
 namespace rpg {
 
-struct RenderComponent : public Component
+struct SpriteComponent : public Component
 {
   Sprite::Ptr sprite;
 };
 
-class RenderSystem : public System
+class SpriteSystem : public System
 {
 public:
-  RenderSystem(std::shared_ptr<Map> map)
-    : m_map(std::move(map))
-  {
+  void update(entt::registry& registry) override;
+  void draw(entt::registry& registry, SDL_Renderer* renderer, const Camera& camera) override;
+  int getLayer() const override {
+    return 10;
   }
-  bool isApplicable(const Entity& entity) override;
-  void draw(const Entity& entity, SDL_Renderer* renderer) override;
-
-private:
-  std::shared_ptr<Map> m_map;
 };
 
-struct AnimationComponent : public Component
+struct AnimationStateComponent : public Component
 {
   std::map<State, Sprite::Ptr> sprite_map;
   State previous_state;
 };
 
-class AnimationSystem : public System
+class AnimationStateSystem : public System
 {
 public:
-  bool isApplicable(const Entity& entity) override;
-  void update(const Entity& entity) override;
+  void update(entt::registry& registry) override;
 };
 } // namespace rpg

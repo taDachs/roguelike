@@ -2,44 +2,37 @@
 #include <iostream>
 
 using namespace rpg;
-bool RenderSystem::isApplicable(const Entity& entity)
+void SpriteSystem::draw(entt::registry& registry, SDL_Renderer* renderer, const Camera& camera)
 {
-  return entity.hasComponent<RenderComponent>() && entity.hasComponent<PositionComponent>();
-}
-
-void RenderSystem::draw(const Entity& entity, SDL_Renderer* renderer)
-{
-  auto& render   = entity.getComponent<RenderComponent>();
-  auto& position = entity.getComponent<PositionComponent>();
-
-  glm::vec2 screen_pose = m_map->realToScreen(position.pose);
-
-  render.sprite->draw(renderer,
-                      static_cast<int>(screen_pose.x),
-                      static_cast<int>(screen_pose.y),
-                      position.orientation == PositionComponent::Orientation::LEFT);
-}
-
-bool AnimationSystem::isApplicable(const Entity& entity)
-{
-  return entity.hasComponent<RenderComponent>() && entity.hasComponent<AnimationComponent>();
-}
-
-void AnimationSystem::update(const Entity& entity)
-{
-  auto& render    = entity.getComponent<RenderComponent>();
-  auto& animation = entity.getComponent<AnimationComponent>();
-
-  if (entity.hasComponent<StateComponent>())
+  for (auto &&[entity, sprite, position] : registry.view<SpriteComponent, PositionComponent>().each())
   {
-    auto& state = entity.getComponent<StateComponent>();
+    glm::vec2 screen_pose = camera.realToScreen(position.pose);
+    sprite.sprite->draw(renderer,
+                        static_cast<int>(screen_pose.x),
+                        static_cast<int>(screen_pose.y),
+                        position.orientation == PositionComponent::Orientation::LEFT);
+
+  }
+}
+
+void SpriteSystem::update(entt::registry& registry)
+{
+  for (auto &&[entity, sprite] : registry.view<SpriteComponent>().each())
+  {
+    sprite.sprite->update();
+  }
+}
+
+void AnimationStateSystem::update(entt::registry& registry)
+{
+  for (auto &&[entity, sprite, animation, state] : registry.view<SpriteComponent, AnimationStateComponent, StateComponent>().each())
+  {
     if (state.state != animation.previous_state)
     {
-      render.sprite->reset();
-      render.sprite            = animation.sprite_map.at(state.state);
+      sprite.sprite            = animation.sprite_map.at(state.state);
+      sprite.sprite->reset();
       animation.previous_state = state.state;
       return;
     }
   }
-  render.sprite->update();
 }

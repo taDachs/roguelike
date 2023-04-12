@@ -1,50 +1,21 @@
 #include "rpg/ecs.h"
+#include <algorithm>
 
 using namespace rpg;
 
-EntityID ECSManager::addEntity()
+void SystemRunner::update(entt::registry& registry)
 {
-  auto e    = std::make_unique<Entity>();
-  size_t id = m_entities.size();
-  m_entities.push_back(std::move(e));
-  return id;
-}
-
-void ECSManager::addSystem(std::shared_ptr<System> system)
-{
-  m_systems.push_back(std::move(system));
-}
-
-void ECSManager::update()
-{
-  for (const auto& e : m_entities)
+  for (auto& system : m_systems)
   {
-    for (const auto& s : m_systems)
-    {
-      if (s->isApplicable(*e))
-      {
-        s->update(*e);
-      }
-    }
+    system->update(registry);
   }
 }
 
-void ECSManager::draw(SDL_Renderer* renderer)
+void SystemRunner::draw(entt::registry& registry, SDL_Renderer* renderer, const Camera& camera)
 {
-  for (const auto& e : m_entities)
+  std::sort(m_systems.begin(), m_systems.end(), [](const auto& a, const auto& b) { return a->getLayer() < b->getLayer(); });
+  for (auto& system : m_systems)
   {
-    for (const auto& s : m_systems)
-    {
-      if (s->isApplicable(*e))
-      {
-        s->draw(*e, renderer);
-      }
-    }
+    system->draw(registry, renderer, camera);
   }
-}
-
-void ECSManager::cleanUp()
-{
-  m_entities.clear();
-  m_systems.clear();
 }

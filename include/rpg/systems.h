@@ -5,34 +5,23 @@
 #include "rpg/map.h"
 #include <SDL.h>
 #include <glm/glm.hpp>
+#include <utility>
 
 namespace rpg {
 
-class MoveableSystem : public System
+class HealthSystem : public System
 {
 public:
-  bool isApplicable(const Entity& entity) override;
-  void update(const Entity& entity) override;
-
-private:
-  uint m_last_tick;
-  uint m_tick_delay = 100;
-};
-
-class GridDrawingComponent : public System
-{
-public:
-  GridDrawingComponent(Map::Ptr map)
-    : m_map(std::move(map))
-  {
+  void update(entt::registry& registry) override;
+  void draw(entt::registry& registry, SDL_Renderer* renderer, const Camera& camera) override;
+  int getLayer() const override {
+    return 20;
   }
-  bool isApplicable(const Entity& entity) override;
-  void draw(const Entity& entity, SDL_Renderer* renderer) override;
-
-private:
-  uint m_last_tick;
-  uint m_tick_delay = 100;
-  Map::Ptr m_map;
 };
 
+class StateSystem : public System
+{
+public:
+  void update(entt::registry& registry) override;
+};
 } // namespace rpg

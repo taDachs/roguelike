@@ -1,4 +1,6 @@
 #include "rpg/systems.h"
+#include "rpg/attack_system.h"
+#include "rpg/movement.h"
 #include <algorithm>
 #include <iostream>
 
@@ -6,68 +8,51 @@ using namespace rpg;
 
 const float RUNNING_THRESH = 0.1;
 
-bool MoveableSystem::isApplicable(const Entity& entity)
+void HealthSystem::update(entt::registry& registry)
 {
-  return entity.hasComponent<MoveableComponent>() && entity.hasComponent<PositionComponent>();
 }
 
-void MoveableSystem::update(const Entity& entity)
+void HealthSystem::draw(entt::registry& registry, SDL_Renderer* renderer, const Camera& camera)
 {
-  auto& position = entity.getComponent<PositionComponent>();
-  auto& moveable = entity.getComponent<MoveableComponent>();
-
-  if (entity.hasComponent<StateComponent>())
+  for (auto &&[entity, health, pose] : registry.view<HealthComponent, PositionComponent>().each())
   {
-    auto state = entity.getComponent<StateComponent>();
-    if (glm::length(moveable.current_direction) > 0 && entity.hasComponent<StatsComponent>())
-    {
-      auto stats = entity.getComponent<StatsComponent>();
-      state.state =
-        (stats.speed - moveable.velocity) < RUNNING_THRESH ? State::RUNNING : State::WALKING;
-    }
-    else
-    {
-      state.state = State::IDLE;
+    glm::vec2 screen_pose = camera.realToScreen(pose.pose);
+
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_Rect full_bar = {
+      static_cast<int>(screen_pose.x - 50), static_cast<int>(screen_pose.y), 100, 10};
+    SDL_RenderFillRect(renderer, &full_bar);
+
+    if (health.health > 0) {
+      SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+      SDL_Rect depleted_bar = {full_bar.x, full_bar.y, static_cast<int>(health.health), 10};
+      SDL_RenderFillRect(renderer, &depleted_bar);
     }
   }
-
-  uint current_time = SDL_GetTicks();
-  uint diff         = current_time - m_last_tick;
-  if (diff < m_tick_delay)
-  {
-    return;
-  }
-  m_last_tick = current_time;
-
-  float seconds = static_cast<float>(diff) / 1000;
-
-  if (moveable.current_direction.x > 0)
-  {
-    position.orientation = PositionComponent::Orientation::RIGHT;
-  }
-  if (moveable.current_direction.x < 0)
-  {
-    position.orientation = PositionComponent::Orientation::LEFT;
-  }
-
-  position.pose += moveable.current_direction * moveable.velocity * seconds;
 }
 
-void GridDrawingComponent::draw(const Entity& entity, SDL_Renderer* renderer)
+void StateSystem::update(entt::registry& registry)
 {
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-  //
-  // int rows = m_map->getResolution();
-  //
-  // // Draw the grid
-  // for (int row = 0; row < rows; row++) {
-  //     for (int col = 0; col < cols; col++) {
-  //         // Calculate the position and size of the current cell
-  //         int x = col * grid_size;
-  //         int y = row * grid_size;
-  //         SDL_Rect rect = { x, y, grid_size, grid_size };
-  //         // Draw the cell
-  //         SDL_RenderDrawRect(renderer, &rect);
-  //     }
-  // }
+  for (auto &&[entity, state] : registry.view<StateComponent>().each())
+  {
+    if (registry.all_of<AttackComponent>(entity))
+    {
+      state.state = State::SHOOTING;
+      continue;
+    }
+    if (registry.all_of<PathComponent>(entity))
+    {
+      state.state = State::WALKING;
+      continue;
+    }
+    if (registry.all_of<HealthComponent>(entity))
+    {
+      auto& health = registry.get<HealthComponent>(entity);
+      if (health.health <= 0) {
+        state.state = State::DEAD;
+        continue;
+      }
+    }
+    state.state = State::IDLE;
+  }
 }

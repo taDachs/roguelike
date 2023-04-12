@@ -1,11 +1,11 @@
 #pragma once
 
 #include "rpg/ecs.h"
+#include <functional>
 #include <glm/glm.hpp>
 #include <queue>
 
 namespace rpg {
-
 
 enum State
 {
@@ -25,11 +25,20 @@ struct PositionComponent : public Component
   };
   glm::vec2 pose;
   Orientation orientation = RIGHT;
+
+  float distance(const PositionComponent& other) const
+  {
+    return glm::length(other.pose - pose);
+  }
 };
 
 struct StateComponent : public Component
 {
   State state;
+};
+
+struct HealthComponent : public Component {
+  float health;
 };
 
 struct StatsComponent : public Component
@@ -38,16 +47,20 @@ struct StatsComponent : public Component
   float speed;
 };
 
-struct MoveableComponent : public Component
+struct InventoryComponent : public Component
 {
-  // in m/s
-  glm::vec2 current_direction;
-  float velocity;
+  std::vector<entt::entity> equipped;
 };
 
 
 struct PlayerControlComponent : public Component
 {
+};
+
+struct HandsComponent : public Component
+{
+  entt::entity left = entt::null;
+  entt::entity right = entt::null;
 };
 
 } // namespace rpg
