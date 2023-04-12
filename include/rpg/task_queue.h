@@ -9,7 +9,7 @@ public:
   virtual bool isDone(entt::registry& registry, const entt::entity& entity) const = 0;
   virtual void start(entt::registry& registry, const entt::entity& entity) = 0;
   virtual void update(entt::registry& registry, const entt::entity& entity) {};
-  virtual void finish(entt::registry& registry, const entt::entity& entity) {};
+  virtual void finish(entt::registry& registry, const entt::entity& entity) = 0;
 };
 
 struct TaskQueueComponent : public Component

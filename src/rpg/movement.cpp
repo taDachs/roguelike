@@ -11,6 +11,9 @@ using namespace rpg;
 
 bool MoveTask::isDone(entt::registry& registry, const entt::entity& entity) const
 {
+  if (registry.all_of<StateComponent>(entity) && registry.get<StateComponent>(entity).state == State::DEAD) {
+    return true;
+  }
   return !registry.all_of<PathComponent>(entity);
 }
 
@@ -22,13 +25,19 @@ void MoveTask::start(entt::registry& registry, const entt::entity& entity)
     return;
   }
   auto& path = registry.emplace_or_replace<PathComponent>(entity);
+  path.last_tick = SDL_GetTicks();
   path.path = path_to_goal;
-  path.goal = path_to_goal.back();
+  path.last_position = pose.pose;
+}
+
+void MoveTask::finish(entt::registry& registry, const entt::entity& entity)
+{
+  registry.remove<PathComponent>(entity);
 }
 
 void PathFollowingSystem::update(entt::registry& registry)
 {
-  for (auto &&[entity, pose, path, stats] : registry.view<PositionComponent, PathComponent, StatsComponent>().each())
+  for (auto &&[entity, pose, path, moveable] : registry.view<PositionComponent, PathComponent, MoveableComponent>().each())
   {
     if (path.path.empty())
     {
@@ -63,7 +72,7 @@ void PathFollowingSystem::update(entt::registry& registry)
     }
 
     uint time_diff          = current_time - path.last_tick;
-    float traveled_distance = std::fminf(norm, (time_diff / 1000.0) * stats.speed);
+    float traveled_distance = std::fminf(norm, (time_diff / 1000.0) * moveable.speed);
 
     pose.pose = path.last_position + (traveled_distance / (norm + 0.00001F)) * diff;
   }

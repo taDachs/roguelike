@@ -57,10 +57,9 @@ struct PlayerControlComponent : public Component
 {
 };
 
-struct HandsComponent : public Component
+struct PlayerFactionComponent : public Component
 {
-  entt::entity left = entt::null;
-  entt::entity right = entt::null;
 };
+
 
 } // namespace rpg

@@ -9,6 +9,9 @@ using namespace rpg;
 
 bool AttackTask::isDone(entt::registry& registry, const entt::entity& entity) const
 {
+  if (registry.all_of<StateComponent>(entity) && registry.get<StateComponent>(entity).state == State::DEAD) {
+    return true;
+  }
   return !registry.all_of<AttackComponent>(entity);
 }
 
@@ -30,7 +33,6 @@ void AttackTask::update(entt::registry& registry, const entt::entity& entity)
       continue;
     }
 
-    auto& target_position = registry.get<PositionComponent>(m_target);
     if (target_distance < weapon->range) {
       in_range = true;
     }
@@ -60,6 +62,14 @@ void AttackSystem::update(entt::registry& registry)
     auto& target_pose = registry.get<PositionComponent>(attack.target);
 
     float target_distance = pose.distance(target_pose);
+
+    glm::vec2 direction = target_pose.pose - pose.pose;
+    if (direction.x > 0)
+    {
+      pose.orientation = PositionComponent::Orientation::RIGHT;
+    } else if (direction.x < 0) {
+      pose.orientation = PositionComponent::Orientation::LEFT;
+    }
 
     for (const auto& equipped_id : inventory.equipped) {
       auto* weapon = registry.try_get<WeaponComponent>(equipped_id);

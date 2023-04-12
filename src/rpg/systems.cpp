@@ -35,6 +35,14 @@ void StateSystem::update(entt::registry& registry)
 {
   for (auto &&[entity, state] : registry.view<StateComponent>().each())
   {
+    if (registry.all_of<HealthComponent>(entity))
+    {
+      auto& health = registry.get<HealthComponent>(entity);
+      if (health.health <= 0) {
+        state.state = State::DEAD;
+        continue;
+      }
+    }
     if (registry.all_of<AttackComponent>(entity))
     {
       state.state = State::SHOOTING;
@@ -44,14 +52,6 @@ void StateSystem::update(entt::registry& registry)
     {
       state.state = State::WALKING;
       continue;
-    }
-    if (registry.all_of<HealthComponent>(entity))
-    {
-      auto& health = registry.get<HealthComponent>(entity);
-      if (health.health <= 0) {
-        state.state = State::DEAD;
-        continue;
-      }
     }
     state.state = State::IDLE;
   }

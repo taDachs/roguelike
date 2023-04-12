@@ -4,7 +4,9 @@
 #include "rpg/ecs.h"
 #include "rpg/game.h"
 #include "rpg/map.h"
+#include "rpg/mouse_input.h"
 #include "rpg/movement.h"
+#include "rpg/ranged_ai.h"
 #include "rpg/render.h"
 #include "rpg/sprite.h"
 #include "rpg/systems.h"
@@ -36,7 +38,7 @@ void loadSprites(rpg::SpriteManager& sm, SDL_Renderer* renderer)
   sm.addSprite("idle", "assets/soldier_1/Idle.png", frame_delay, renderer);
   sm.addSprite("recharge", "assets/soldier_1/Recharge.png", frame_delay, renderer);
   sm.addSprite("running", "assets/soldier_1/Run.png", frame_delay, renderer);
-  sm.addSprite("shot_1", "assets/soldier_1/Shot_1.png", 12, renderer);
+  sm.addSprite("shot_1", "assets/soldier_1/Shot_1.png", 25, renderer);
   sm.addSprite("shot_2", "assets/soldier_1/Shot_2.png", frame_delay, renderer);
   sm.addSprite("walking", "assets/soldier_1/Walk.png", frame_delay, renderer);
 }
@@ -47,19 +49,19 @@ entt::entity initGun(entt::registry& registry, rpg::SpriteManager& sm)
 
   auto& weapon  = registry.emplace<rpg::WeaponComponent>(entity);
   weapon.damage = 5;
-  weapon.speed  = 50;
+  weapon.speed  = 100;
   weapon.range  = 5;
 
   return entity;
 }
 
-entt::entity initSoldier(entt::registry& registry, rpg::SpriteManager& sm)
+entt::entity spawnSoldier(entt::registry& registry, rpg::SpriteManager& sm, int x, int y)
 {
   entt::entity entity = registry.create();
 
   auto& pose   = registry.emplace<rpg::PositionComponent>(entity);
-  pose.pose.x  = 0;
-  pose.pose.y  = 0;
+  pose.pose.x  = x;
+  pose.pose.y  = y;
   auto& path   = registry.emplace<rpg::PathComponent>(entity);
 
   auto& render  = registry.emplace<rpg::SpriteComponent>(entity);
@@ -80,21 +82,55 @@ entt::entity initSoldier(entt::registry& registry, rpg::SpriteManager& sm)
   auto& stats = registry.emplace<rpg::StatsComponent>(entity);
   stats.speed = 2;
 
+  auto& moveable = registry.emplace<rpg::MoveableComponent>(entity);
+  moveable.speed = 2;
+
   auto& task_queue = registry.emplace<rpg::TaskQueueComponent>(entity);
+
+  auto& clickable = registry.emplace<rpg::ClickableComponent>(entity);
+  clickable.bbox.x = -16;
+  clickable.bbox.y = -70;
+  clickable.bbox.w = 32;
+  clickable.bbox.h = 70;
 
   auto& health  = registry.emplace<rpg::HealthComponent>(entity);
   health.health = 100;
   // auto& player_control = entity.addComponent<rpg::PlayerControlComponent>();
 
-  entt::entity gun = initGun(registry, sm);
-
-  auto& inventory = registry.emplace<rpg::InventoryComponent>(entity);
-  inventory.equipped.push_back(gun);
-
   return entity;
 }
 
-void drawGrid(SDL_Renderer* renderer, int rows, int cols, int grid_size) {}
+entt::entity spawnFriendlySoldier(entt::registry& registry, rpg::SpriteManager& sm, int x, int y)
+{
+  entt::entity soldier = spawnSoldier(registry, sm, x, y);
+  registry.emplace<rpg::PlayerFactionComponent>(soldier);
+
+  entt::entity gun = initGun(registry, sm);
+  auto& weapon = registry.get<rpg::WeaponComponent>(gun);
+  weapon.damage = 10;
+  weapon.range = 5;
+
+  auto& inventory = registry.emplace<rpg::InventoryComponent>(soldier);
+  inventory.equipped.push_back(gun);
+  return soldier;
+}
+
+entt::entity spawnEnemy(entt::registry& registry, rpg::SpriteManager& sm, int x, int y)
+{
+  entt::entity soldier = spawnSoldier(registry, sm, x, y);
+  auto& ranged_ai = registry.emplace<rpg::RangedAIComponent>(soldier);
+  ranged_ai.perimeter_radius = 7;
+
+  entt::entity gun = initGun(registry, sm);
+  auto& weapon = registry.get<rpg::WeaponComponent>(gun);
+  weapon.damage = 2;
+  weapon.range = 3;
+
+  auto& inventory = registry.emplace<rpg::InventoryComponent>(soldier);
+  inventory.equipped.push_back(gun);
+  return soldier;
+}
+
 
 int main(int argc, char* args[])
 {
@@ -147,6 +183,8 @@ int main(int argc, char* args[])
   auto sprite_render = std::make_shared<rpg::SpriteSystem>();
   auto tilemap       = std::make_shared<rpg::TileSystem>();
   auto state       = std::make_shared<rpg::StateSystem>();
+  auto clickable       = std::make_shared<rpg::ClickableSystem>(camera);
+  auto ranged_ai       = std::make_shared<rpg::RangedAISystem>();
 
   auto animation = std::make_shared<rpg::AnimationStateSystem>();
 
@@ -161,24 +199,17 @@ int main(int argc, char* args[])
   system_runner.addSystem(sprite_render);
   system_runner.addSystem(tilemap);
   system_runner.addSystem(state);
+  system_runner.addSystem(clickable);
+  system_runner.addSystem(ranged_ai);
   system_runner.addSystem(animation);
   system_runner.addSystem(path_following);
   system_runner.addSystem(task_queue);
   system_runner.addSystem(health_system);
   system_runner.addSystem(attack_system);
 
-  entt::entity friendly_soldier_id = initSoldier(registry, sprite_manager);
-  entt::entity enemy_soldier_id    = initSoldier(registry, sprite_manager);
-  entt::entity gun_id              = initGun(registry, sprite_manager);
-
-  auto& friendly_pose  = registry.get<rpg::PositionComponent>(friendly_soldier_id);
-  friendly_pose.pose.x = 5;
-  friendly_pose.pose.y = 4;
-
-  auto& enemy_pose       = registry.get<rpg::PositionComponent>(enemy_soldier_id);
-  enemy_pose.pose.x      = 10;
-  enemy_pose.pose.y      = 4;
-  enemy_pose.orientation = rpg::PositionComponent::Orientation::LEFT;
+  entt::entity friendly_soldier_id = spawnFriendlySoldier(registry, sprite_manager, 1, 4);
+  entt::entity enemy_soldier_id_1    = spawnEnemy(registry, sprite_manager, 10, 4);
+  entt::entity enemy_soldier_id_2    = spawnEnemy(registry, sprite_manager, 10, 3);
 
   int fps         = 10;
   int frame_delay = 1000 / fps;
@@ -192,26 +223,24 @@ int main(int argc, char* args[])
   SDL_Event event;
   bool quit = false;
 
-  int state_index = 0;
-
   while (!quit)
   {
     frame_start = SDL_GetTicks();
 
     while (SDL_PollEvent(&event))
     {
+      glm::vec2 mouse_pos;
+      mouse_pos.x = event.button.x;
+      mouse_pos.y = event.button.y;
+      clickable->setMousePose(mouse_pos);
       if (event.type == SDL_MOUSEBUTTONDOWN)
       {
         // Handle mouse click
         if (event.button.button == SDL_BUTTON_LEFT)
         {
           // Handle left mouse button click
-          glm::vec3 click_pos;
-          click_pos.x = event.button.x;
-          click_pos.y = event.button.y;
-          click_pos.z = 1;
 
-          glm::vec2 game_pos = camera.screenToReal(click_pos);
+          glm::vec2 game_pos = camera.screenToReal(mouse_pos);
           auto move_task =
             std::make_unique<rpg::MoveTask>(game_pos, rpg::Game::map.getResolution());
           auto& queue = registry.get<rpg::TaskQueueComponent>(friendly_soldier_id);
@@ -220,15 +249,14 @@ int main(int argc, char* args[])
         if (event.button.button == SDL_BUTTON_RIGHT)
         {
           // Handle left mouse button click
-          glm::vec3 click_pos;
-          click_pos.x        = event.button.x;
-          click_pos.y        = event.button.y;
-          click_pos.z        = 1;
-          glm::vec2 game_pos = camera.screenToReal(click_pos);
+          entt::entity clicked;
+          if (!rpg::findClicked(registry, mouse_pos, camera, clicked))
+          {
+            continue;
+          }
 
           auto& queue = registry.get<rpg::TaskQueueComponent>(friendly_soldier_id);
-
-          auto attack_task   = std::make_unique<rpg::AttackTask>(enemy_soldier_id);
+          auto attack_task   = std::make_unique<rpg::AttackTask>(clicked);
           queue.queue        = {};
           queue.current_task = nullptr;
           queue.queue.push(std::move(attack_task));
