@@ -27,13 +27,24 @@ void AttackTask::update(entt::registry& registry, const entt::entity& entity)
 
   bool in_range = false;
 
-  for (const auto& equipped_id : inventory.equipped) {
-    auto* weapon = registry.try_get<WeaponComponent>(equipped_id);
-    if (!weapon) {
+  for (const auto& slot_id : inventory.slots) {
+    if (!registry.all_of<SlotComponent>(slot_id)) {
       continue;
     }
 
-    if (target_distance < weapon->range) {
+    entt::entity equipped = registry.get<SlotComponent>(slot_id).equipped;
+
+    if (!registry.valid(equipped)) {
+      continue;
+    }
+
+    if (!registry.all_of<WeaponComponent>(equipped)) {
+      continue;
+    }
+
+    auto& weapon = registry.get<WeaponComponent>(equipped);
+
+    if (target_distance < weapon.range) {
       in_range = true;
     }
   }
@@ -64,26 +75,32 @@ void AttackSystem::update(entt::registry& registry)
     float target_distance = pose.distance(target_pose);
 
     glm::vec2 direction = target_pose.pose - pose.pose;
-    if (direction.x > 0)
-    {
-      pose.orientation = PositionComponent::Orientation::RIGHT;
-    } else if (direction.x < 0) {
-      pose.orientation = PositionComponent::Orientation::LEFT;
-    }
+    pose.orientation = glm::normalize(direction);
 
-    for (const auto& equipped_id : inventory.equipped) {
-      auto* weapon = registry.try_get<WeaponComponent>(equipped_id);
-      if (!weapon) {
-        continue;
-      }
-      if (target_distance > weapon->range) {
+    for (const auto& slot_id : inventory.slots) {
+      if (!registry.all_of<SlotComponent>(slot_id)) {
         continue;
       }
 
-      uint time_diff = SDL_GetTicks() - weapon->last_attack;
-      if (time_diff > weapon->speed) {
-        weapon->last_attack = SDL_GetTicks();
-        target_health.health -= weapon->damage;;
+      entt::entity equipped = registry.get<SlotComponent>(slot_id).equipped;
+
+      if (!registry.valid(equipped)) {
+        continue;
+      }
+
+      if (!registry.all_of<WeaponComponent>(equipped)) {
+        continue;
+      }
+
+      auto& weapon = registry.get<WeaponComponent>(equipped);
+      if (target_distance > weapon.range) {
+        continue;
+      }
+
+      uint time_diff = SDL_GetTicks() - weapon.last_attack;
+      if (time_diff > weapon.speed) {
+        weapon.last_attack = SDL_GetTicks();
+        target_health.health -= weapon.damage;;
       }
     }
 

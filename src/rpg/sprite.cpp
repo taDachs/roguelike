@@ -28,7 +28,7 @@ void Sprite::draw(SDL_Renderer* renderer, int x, int y, bool flipped)
 {
   // Draw the current frame of the sprite at the given position
   SDL_Rect dst_rect = {x - m_frames[m_current_frame].w / 2,
-                       y - m_frames[m_current_frame].h,
+                       y - m_frames[m_current_frame].h / 2,
                        m_frames[m_current_frame].w,
                        m_frames[m_current_frame].h};
   if (flipped)

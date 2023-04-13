@@ -12,7 +12,10 @@ namespace rpg {
 
 struct SpriteComponent : public Component
 {
-  Sprite::Ptr sprite;
+  SDL_Texture* texture;
+  SDL_Rect frame;
+  bool flipped;
+  int layer = 0;
 };
 
 class SpriteSystem : public System

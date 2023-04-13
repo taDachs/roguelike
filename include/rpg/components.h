@@ -18,13 +18,8 @@ enum State
 
 struct PositionComponent : public Component
 {
-  enum Orientation
-  {
-    LEFT,
-    RIGHT,
-  };
   glm::vec2 pose;
-  Orientation orientation = RIGHT;
+  glm::vec2 orientation = {0, -1};
 
   float distance(const PositionComponent& other) const
   {
@@ -39,6 +34,7 @@ struct StateComponent : public Component
 
 struct HealthComponent : public Component {
   float health;
+  float max_health;
 };
 
 struct StatsComponent : public Component
@@ -49,7 +45,15 @@ struct StatsComponent : public Component
 
 struct InventoryComponent : public Component
 {
-  std::vector<entt::entity> equipped;
+  std::vector<entt::entity> slots;
+  size_t size;
+};
+
+struct SlotComponent : public Component
+{
+  entt::entity equipped;
+  glm::vec2 offset;
+  glm::vec2 orientation;
 };
 
 

@@ -62,14 +62,7 @@ void PathFollowingSystem::update(entt::registry& registry)
     glm::vec2 diff = path.path.at(0) - path.last_position;
     float norm     = glm::length(diff);
 
-    if (diff.x < 0)
-    {
-      pose.orientation = PositionComponent::Orientation::LEFT;
-    }
-    else if (diff.x > 0)
-    {
-      pose.orientation = PositionComponent::Orientation::RIGHT;
-    }
+    pose.orientation = glm::normalize(diff);
 
     uint time_diff          = current_time - path.last_tick;
     float traveled_distance = std::fminf(norm, (time_diff / 1000.0) * moveable.speed);

@@ -30,6 +30,7 @@ add_library(GAME_LIB
   src/rpg/tilemap.cpp
   src/rpg/mouse_input.cpp
   src/rpg/ranged_ai.cpp
+  src/rpg/body.cpp
 )
 # target_include_directories(GAME_LIB)
 target_link_libraries(GAME_LIB SDL2::Main SDL2::TTF SDL2::Image EnTT::EnTT ${GLM_LIBRARIES})

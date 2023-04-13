@@ -24,4 +24,10 @@ class StateSystem : public System
 public:
   void update(entt::registry& registry) override;
 };
+
+class SlotSystem : public System
+{
+public:
+  void update(entt::registry& registry) override;
+};
 } // namespace rpg
