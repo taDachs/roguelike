@@ -11,7 +11,9 @@ using namespace rpg;
 
 bool MoveTask::isDone(entt::registry& registry, const entt::entity& entity) const
 {
-  if (registry.all_of<StateComponent>(entity) && registry.get<StateComponent>(entity).state == State::DEAD) {
+  if (registry.all_of<StateComponent>(entity) &&
+      registry.get<StateComponent>(entity).state == State::DEAD)
+  {
     return true;
   }
   return !registry.all_of<PathComponent>(entity);
@@ -19,14 +21,15 @@ bool MoveTask::isDone(entt::registry& registry, const entt::entity& entity) cons
 
 void MoveTask::start(entt::registry& registry, const entt::entity& entity)
 {
-  auto& pose = registry.get<PositionComponent>(entity);
+  auto& pose                          = registry.get<PositionComponent>(entity);
   std::vector<glm::vec2> path_to_goal = Game::map.findPath(pose.pose, m_goal);
-  if (path_to_goal.empty()) {
+  if (path_to_goal.empty())
+  {
     return;
   }
-  auto& path = registry.emplace_or_replace<PathComponent>(entity);
-  path.last_tick = SDL_GetTicks();
-  path.path = path_to_goal;
+  auto& path         = registry.emplace_or_replace<PathComponent>(entity);
+  path.last_tick     = SDL_GetTicks();
+  path.path          = path_to_goal;
   path.last_position = pose.pose;
 }
 
@@ -37,7 +40,8 @@ void MoveTask::finish(entt::registry& registry, const entt::entity& entity)
 
 void PathFollowingSystem::update(entt::registry& registry)
 {
-  for (auto &&[entity, pose, path, moveable] : registry.view<PositionComponent, PathComponent, MoveableComponent>().each())
+  for (auto&& [entity, pose, path, moveable] :
+       registry.view<PositionComponent, PathComponent, MoveableComponent>().each())
   {
     if (path.path.empty())
     {
@@ -71,9 +75,11 @@ void PathFollowingSystem::update(entt::registry& registry)
   }
 }
 
-void PathFollowingSystem::draw(entt::registry& registry, SDL_Renderer* renderer, const Camera& camera)
+void PathFollowingSystem::draw(entt::registry& registry,
+                               SDL_Renderer* renderer,
+                               const Camera& camera)
 {
-  for (auto &&[entity, path] : registry.view<PathComponent>().each())
+  for (auto&& [entity, path] : registry.view<PathComponent>().each())
   {
     SDL_SetRenderDrawColor(renderer, 0, 255, 0, 0);
     for (const auto& node : path.path)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rpg/attack_system.h"
+#include "rpg/body.h"
 #include "rpg/components.h"
 #include "rpg/ecs.h"
 #include "rpg/mouse_input.h"
@@ -9,7 +10,6 @@
 #include "rpg/render.h"
 #include "rpg/sprite.h"
 #include "rpg/tilemap.h"
-#include "rpg/body.h"
 #include <SDL.h>
 
 namespace rpg {
@@ -51,10 +51,10 @@ entt::entity initGun(entt::registry& registry, rpg::SpriteManager& sm)
   weapon.speed  = 100;
   weapon.range  = 5;
 
-  auto& sprite = registry.emplace<SpriteComponent>(entity);
+  auto& sprite   = registry.emplace<SpriteComponent>(entity);
   sprite.texture = sm.getTexture("weapons/gun");
-  sprite.frame = sm.getRect("weapons/gun", 0);
-  sprite.layer = 10;
+  sprite.frame   = sm.getRect("weapons/gun", 0);
+  sprite.layer   = 10;
 
   auto& pose = registry.emplace<PositionComponent>(entity);
 
@@ -65,14 +65,14 @@ entt::entity spawnSoldier(entt::registry& registry, rpg::SpriteManager& sm, int 
 {
   entt::entity entity = registry.create();
 
-  auto& pose   = registry.emplace<rpg::PositionComponent>(entity);
-  pose.pose.x  = x;
-  pose.pose.y  = y;
-  auto& path   = registry.emplace<rpg::PathComponent>(entity);
+  auto& pose  = registry.emplace<rpg::PositionComponent>(entity);
+  pose.pose.x = x;
+  pose.pose.y = y;
+  auto& path  = registry.emplace<rpg::PathComponent>(entity);
 
-  auto& render  = registry.emplace<rpg::SpriteComponent>(entity);
+  auto& render   = registry.emplace<rpg::SpriteComponent>(entity);
   render.texture = sm.getTexture("idle");
-  render.frame = sm.getRect("idle", 0);
+  render.frame   = sm.getRect("idle", 0);
 
   auto& animation = registry.emplace<rpg::AnimationStateComponent>(entity);
   std::map<rpg::State, std::shared_ptr<rpg::Sprite> > sprite_map;
@@ -94,7 +94,7 @@ entt::entity spawnSoldier(entt::registry& registry, rpg::SpriteManager& sm, int 
 
   auto& task_queue = registry.emplace<rpg::TaskQueueComponent>(entity);
 
-  auto& clickable = registry.emplace<rpg::ClickableComponent>(entity);
+  auto& clickable  = registry.emplace<rpg::ClickableComponent>(entity);
   clickable.bbox.x = -16;
   clickable.bbox.y = -70;
   clickable.bbox.w = 32;
@@ -124,142 +124,166 @@ entt::entity spawnFriendlySoldier(entt::registry& registry, rpg::SpriteManager& 
 
 entt::entity spawnEnemy(entt::registry& registry, rpg::SpriteManager& sm, int x, int y)
 {
-  entt::entity soldier = spawnSoldier(registry, sm, x, y);
-  auto& ranged_ai = registry.emplace<rpg::RangedAIComponent>(soldier);
+  entt::entity soldier       = spawnSoldier(registry, sm, x, y);
+  auto& ranged_ai            = registry.emplace<rpg::RangedAIComponent>(soldier);
   ranged_ai.perimeter_radius = 7;
 
   entt::entity gun = initGun(registry, sm);
-  auto& weapon = registry.get<rpg::WeaponComponent>(gun);
-  weapon.damage = 2;
-  weapon.range = 3;
+  auto& weapon     = registry.get<rpg::WeaponComponent>(gun);
+  weapon.damage    = 2;
+  weapon.range     = 3;
 
   auto& inventory = registry.emplace<rpg::InventoryComponent>(soldier);
   // inventory.equipped.push_back(gun);
   return soldier;
 }
 
-entt::entity buildHead(entt::registry& registry, rpg::SpriteManager& sm, entt::entity torso, entt::entity entity = entt::null)
+entt::entity buildHead(entt::registry& registry,
+                       rpg::SpriteManager& sm,
+                       entt::entity torso,
+                       entt::entity entity = entt::null)
 {
-  if (!registry.valid(entity)) {
+  if (!registry.valid(entity))
+  {
     entity = registry.create();
   }
 
-  auto& sprite = registry.emplace<SpriteComponent>(entity);
+  auto& sprite   = registry.emplace<SpriteComponent>(entity);
   sprite.texture = sm.getTexture("human/head");
-  sprite.frame = sm.getRect("human/head", 0);
-  sprite.layer = 10;
-  auto& limb = registry.emplace<LimbComponent>(entity);
-  limb.vital = true;
-  limb.attached = torso;
-  auto& pose = registry.emplace<PositionComponent>(entity);
+  sprite.frame   = sm.getRect("human/head", 0);
+  sprite.layer   = 10;
+  auto& limb     = registry.emplace<LimbComponent>(entity);
+  limb.vital     = true;
+  limb.attached  = torso;
+  auto& pose     = registry.emplace<PositionComponent>(entity);
 
-  auto& health = registry.emplace<HealthComponent>(entity);
+  auto& health      = registry.emplace<HealthComponent>(entity);
   health.max_health = 20;
-  health.health = 20;
+  health.health     = 20;
 
   return entity;
 }
 
-entt::entity buildTorso(entt::registry& registry, rpg::SpriteManager& sm, entt::entity entity = entt::null)
+entt::entity
+buildTorso(entt::registry& registry, rpg::SpriteManager& sm, entt::entity entity = entt::null)
 {
-  if (!registry.valid(entity)) {
+  if (!registry.valid(entity))
+  {
     entity = registry.create();
   }
 
-  auto& sprite = registry.emplace<SpriteComponent>(entity);
-  sprite.layer = 9;
+  auto& sprite   = registry.emplace<SpriteComponent>(entity);
+  sprite.layer   = 9;
   sprite.texture = sm.getTexture("human/body");
-  sprite.frame = sm.getRect("human/body", 0);
-  auto& limb = registry.emplace<LimbComponent>(entity);
-  limb.vital = true;
-  auto& pose = registry.emplace<PositionComponent>(entity);
+  sprite.frame   = sm.getRect("human/body", 0);
+  auto& limb     = registry.emplace<LimbComponent>(entity);
+  limb.vital     = true;
+  auto& pose     = registry.emplace<PositionComponent>(entity);
 
-  auto& health = registry.emplace<HealthComponent>(entity);
+  auto& health      = registry.emplace<HealthComponent>(entity);
   health.max_health = 50;
-  health.health = 50;
+  health.health     = 50;
 
   return entity;
 }
 
-entt::entity buildArm(entt::registry& registry, rpg::SpriteManager& sm, entt::entity torso, bool left, entt::entity entity = entt::null)
+entt::entity buildArm(entt::registry& registry,
+                      rpg::SpriteManager& sm,
+                      entt::entity torso,
+                      bool left,
+                      entt::entity entity = entt::null)
 {
-  if (!registry.valid(entity)) {
+  if (!registry.valid(entity))
+  {
     entity = registry.create();
   }
 
-  auto& sprite = registry.emplace<SpriteComponent>(entity);
+  auto& sprite   = registry.emplace<SpriteComponent>(entity);
   sprite.texture = sm.getTexture("human/arm");
-  sprite.frame = sm.getRect("human/arm", 0);
-  sprite.layer = 9;
+  sprite.frame   = sm.getRect("human/arm", 0);
+  sprite.layer   = 9;
 
-  auto& limb = registry.emplace<LimbComponent>(entity);
-  limb.vital = false;
+  auto& limb    = registry.emplace<LimbComponent>(entity);
+  limb.vital    = false;
   limb.attached = torso;
-  if (left) {
+  if (left)
+  {
     limb.offset.x = -0.3;
-  } else {
+  }
+  else
+  {
     limb.offset.x = 0.3;
   }
   auto& pose = registry.emplace<PositionComponent>(entity);
 
-  auto& slot = registry.emplace<SlotComponent>(entity);
+  auto& slot    = registry.emplace<SlotComponent>(entity);
   slot.offset.y = -0.2;
 
-  auto& health = registry.emplace<HealthComponent>(entity);
+  auto& health      = registry.emplace<HealthComponent>(entity);
   health.max_health = 50;
-  health.health = 50;
+  health.health     = 50;
 
   return entity;
 }
 
-entt::entity buildLeg(entt::registry& registry, rpg::SpriteManager& sm, entt::entity torso, bool left, entt::entity entity = entt::null)
+entt::entity buildLeg(entt::registry& registry,
+                      rpg::SpriteManager& sm,
+                      entt::entity torso,
+                      bool left,
+                      entt::entity entity = entt::null)
 {
-  if (!registry.valid(entity)) {
+  if (!registry.valid(entity))
+  {
     entity = registry.create();
   }
 
-  auto& sprite = registry.emplace<SpriteComponent>(entity);
+  auto& sprite   = registry.emplace<SpriteComponent>(entity);
   sprite.texture = sm.getTexture("human/leg");
-  sprite.frame = sm.getRect("human/leg", 0);
-  sprite.layer = 8;
+  sprite.frame   = sm.getRect("human/leg", 0);
+  sprite.layer   = 8;
 
-  auto& limb = registry.emplace<LimbComponent>(entity);
-  limb.vital = false;
+  auto& limb    = registry.emplace<LimbComponent>(entity);
+  limb.vital    = false;
   limb.attached = torso;
-  if (left) {
+  if (left)
+  {
     limb.offset.x = -0.1;
-  } else {
+  }
+  else
+  {
     limb.offset.x = 0.1;
   }
   limb.offset.y = -0.1;
-  auto& pose = registry.emplace<PositionComponent>(entity);
+  auto& pose    = registry.emplace<PositionComponent>(entity);
 
   auto& moveable = registry.emplace<MoveableComponent>(entity);
   moveable.speed = 0.5;
 
-  auto& health = registry.emplace<HealthComponent>(entity);
+  auto& health      = registry.emplace<HealthComponent>(entity);
   health.max_health = 20;
-  health.health = 20;
+  health.health     = 20;
 
   return entity;
 }
 
 
-entt::entity buildHuman(entt::registry& registry, rpg::SpriteManager& sm, entt::entity entity = entt::null)
+entt::entity
+buildHuman(entt::registry& registry, rpg::SpriteManager& sm, entt::entity entity = entt::null)
 {
-  if (!registry.valid(entity)) {
+  if (!registry.valid(entity))
+  {
     entity = registry.create();
   }
 
   entt::entity torso = buildTorso(registry, sm);
-  entt::entity head = buildHead(registry, sm, torso);
+  entt::entity head  = buildHead(registry, sm, torso);
   entt::entity l_arm = buildArm(registry, sm, torso, true);
   entt::entity r_arm = buildArm(registry, sm, torso, false);
   entt::entity l_leg = buildLeg(registry, sm, torso, true);
   entt::entity r_leg = buildLeg(registry, sm, torso, false);
 
   auto& body = registry.emplace<BodyComponent>(entity);
-  body.body = torso;
+  body.body  = torso;
   body.limbs.push_back(head);
   body.limbs.push_back(l_arm);
   body.limbs.push_back(r_arm);
@@ -268,21 +292,23 @@ entt::entity buildHuman(entt::registry& registry, rpg::SpriteManager& sm, entt::
 
   auto& pose = registry.emplace<PositionComponent>(entity);
 
-  auto& slot = registry.get<SlotComponent>(r_arm);
+  auto& slot       = registry.get<SlotComponent>(r_arm);
   entt::entity gun = initGun(registry, sm);
-  slot.equipped = gun;
+  slot.equipped    = gun;
 
   return entity;
 }
 
-entt::entity buildPlayerChar(entt::registry& registry, rpg::SpriteManager& sm, entt::entity entity = entt::null)
+entt::entity
+buildPlayerChar(entt::registry& registry, rpg::SpriteManager& sm, entt::entity entity = entt::null)
 {
-  if (!registry.valid(entity)) {
+  if (!registry.valid(entity))
+  {
     entity = registry.create();
   }
 
 
-  auto& clickable = registry.emplace<rpg::ClickableComponent>(entity);
+  auto& clickable  = registry.emplace<rpg::ClickableComponent>(entity);
   clickable.bbox.x = -32;
   clickable.bbox.y = -16;
   clickable.bbox.w = 64;
@@ -292,4 +318,4 @@ entt::entity buildPlayerChar(entt::registry& registry, rpg::SpriteManager& sm, e
 
   return entity;
 }
-}
+} // namespace rpg

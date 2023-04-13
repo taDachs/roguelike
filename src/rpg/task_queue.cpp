@@ -5,10 +5,12 @@ using namespace rpg;
 
 void TaskQueueSystem::update(entt::registry& registry)
 {
-  for (auto &&[entity, queue] : registry.view<TaskQueueComponent>().each())
+  for (auto&& [entity, queue] : registry.view<TaskQueueComponent>().each())
   {
-    if (queue.current_task == nullptr) {
-      if (queue.queue.empty()) {
+    if (queue.current_task == nullptr)
+    {
+      if (queue.queue.empty())
+      {
         continue;
       }
 
@@ -17,10 +19,13 @@ void TaskQueueSystem::update(entt::registry& registry)
       queue.current_task->start(registry, entity);
     }
 
-    if (queue.current_task->isDone(registry, entity)) {
+    if (queue.current_task->isDone(registry, entity))
+    {
       queue.current_task->finish(registry, entity);
       queue.current_task = nullptr;
-    } else {
+    }
+    else
+    {
       queue.current_task->update(registry, entity);
     }
   }

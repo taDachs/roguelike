@@ -9,9 +9,10 @@ struct RangedAIComponent : public Component
   float perimeter_radius;
 };
 
-class RangedAISystem : public System {
+class RangedAISystem : public System
+{
 public:
   void update(entt::registry& registry) override;
 };
 
-}
+} // namespace rpg

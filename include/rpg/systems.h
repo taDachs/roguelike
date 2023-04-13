@@ -14,9 +14,7 @@ class HealthSystem : public System
 public:
   void update(entt::registry& registry) override;
   void draw(entt::registry& registry, SDL_Renderer* renderer, const Camera& camera) override;
-  int getLayer() const override {
-    return 20;
-  }
+  int getLayer() const override { return 20; }
 };
 
 class StateSystem : public System

@@ -74,9 +74,9 @@ int main(int argc, char* args[])
 
   auto sprite_render = std::make_shared<rpg::SpriteSystem>();
   auto tilemap       = std::make_shared<rpg::TileSystem>();
-  auto state       = std::make_shared<rpg::StateSystem>();
-  auto clickable       = std::make_shared<rpg::ClickableSystem>(camera);
-  auto ranged_ai       = std::make_shared<rpg::RangedAISystem>();
+  auto state         = std::make_shared<rpg::StateSystem>();
+  auto clickable     = std::make_shared<rpg::ClickableSystem>(camera);
+  auto ranged_ai     = std::make_shared<rpg::RangedAISystem>();
 
   auto animation = std::make_shared<rpg::AnimationStateSystem>();
 
@@ -85,8 +85,8 @@ int main(int argc, char* args[])
   auto task_queue    = std::make_shared<rpg::TaskQueueSystem>();
   auto health_system = std::make_shared<rpg::HealthSystem>();
   auto attack_system = std::make_shared<rpg::AttackSystem>();
-  auto body_system = std::make_shared<rpg::BodySystem>();
-  auto limb_system = std::make_shared<rpg::LimbSystem>();
+  auto body_system   = std::make_shared<rpg::BodySystem>();
+  auto limb_system   = std::make_shared<rpg::LimbSystem>();
 
   auto slot_system = std::make_shared<rpg::SlotSystem>();
 
@@ -107,9 +107,9 @@ int main(int argc, char* args[])
   system_runner.addSystem(slot_system);
 
   // entt::entity friendly_soldier_id = rpg::spawnFriendlySoldier(registry, sprite_manager, 1, 4);
-  entt::entity enemy_soldier_id_1    = rpg::spawnEnemy(registry, sprite_manager, 10, 4);
-  entt::entity enemy_soldier_id_2    = rpg::spawnEnemy(registry, sprite_manager, 10, 3);
-  entt::entity human_id = rpg::buildHuman(registry, sprite_manager);
+  entt::entity enemy_soldier_id_1 = rpg::spawnEnemy(registry, sprite_manager, 10, 4);
+  entt::entity enemy_soldier_id_2 = rpg::spawnEnemy(registry, sprite_manager, 10, 3);
+  entt::entity human_id           = rpg::buildHuman(registry, sprite_manager);
   rpg::buildPlayerChar(registry, sprite_manager, human_id);
   auto& human_pose = registry.get<rpg::PositionComponent>(human_id);
 
@@ -160,7 +160,7 @@ int main(int argc, char* args[])
             continue;
           }
 
-          auto& queue = registry.get<rpg::TaskQueueComponent>(human_id);
+          auto& queue        = registry.get<rpg::TaskQueueComponent>(human_id);
           auto attack_task   = std::make_unique<rpg::AttackTask>(clicked);
           queue.queue        = {};
           queue.current_task = nullptr;

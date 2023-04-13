@@ -17,7 +17,9 @@ TileManager::~TileManager()
   }
 }
 
-void TileManager::addTile(const std::string& tile_name, const std::string& filename, SDL_Renderer* renderer)
+void TileManager::addTile(const std::string& tile_name,
+                          const std::string& filename,
+                          SDL_Renderer* renderer)
 {
   SDL_Surface* surface = IMG_Load(filename.c_str());
   if (!surface)
@@ -41,20 +43,22 @@ void TileManager::addTile(const std::string& tile_name, const std::string& filen
 
 Tile::Ptr TileManager::getTile(const std::string& tile_name) const
 {
-  return std::make_shared<Tile>(
-      m_textures.at(tile_name)
-  );
+  return std::make_shared<Tile>(m_textures.at(tile_name));
 }
 
 void TileSystem::draw(entt::registry& registry, SDL_Renderer* renderer, const Camera& camera)
 {
-  for (auto &&[entity, pose, tile] : registry.view<PositionComponent, TileComponent>().each())
+  for (auto&& [entity, pose, tile] : registry.view<PositionComponent, TileComponent>().each())
   {
     glm::vec2 screen_pos_start = camera.realToScreen(pose.pose);
-    screen_pos_start = glm::round(screen_pos_start);
-    glm::vec2 screen_pos_end = camera.realToScreen(pose.pose + tile.size);
-    screen_pos_end = glm::round(screen_pos_end);
-    glm::vec2 size = screen_pos_end - screen_pos_start;
-    tile.tile->draw(renderer, {static_cast<int>(screen_pos_start.x), static_cast<int>(screen_pos_start.y), static_cast<int>(size.x), static_cast<int>(size.y)});
+    screen_pos_start           = glm::round(screen_pos_start);
+    glm::vec2 screen_pos_end   = camera.realToScreen(pose.pose + tile.size);
+    screen_pos_end             = glm::round(screen_pos_end);
+    glm::vec2 size             = screen_pos_end - screen_pos_start;
+    tile.tile->draw(renderer,
+                    {static_cast<int>(screen_pos_start.x),
+                     static_cast<int>(screen_pos_start.y),
+                     static_cast<int>(size.x),
+                     static_cast<int>(size.y)});
   }
 }

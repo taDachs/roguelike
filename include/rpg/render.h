@@ -23,9 +23,7 @@ class SpriteSystem : public System
 public:
   void update(entt::registry& registry) override;
   void draw(entt::registry& registry, SDL_Renderer* renderer, const Camera& camera) override;
-  int getLayer() const override {
-    return 10;
-  }
+  int getLayer() const override { return 10; }
 };
 
 struct AnimationStateComponent : public Component

@@ -45,15 +45,25 @@ class SpriteManager
 {
 public:
   // Constructor and destructor
-  SpriteManager()  = default;
+  SpriteManager() = default;
   ~SpriteManager();
 
   // Load a sprite from a file
-  void addSprite(const std::string& sprite_name, const std::string& filename, float frame_delays, SDL_Renderer* renderer, bool loop = true);
+  void addSprite(const std::string& sprite_name,
+                 const std::string& filename,
+                 float frame_delays,
+                 SDL_Renderer* renderer,
+                 bool loop = true);
   // Get a sprite by name
   Sprite::Ptr getSprite(const std::string& sprite_name);
-  SDL_Texture* getTexture(const std::string& sprite_name) const { return m_textures.at(sprite_name); }
-  SDL_Rect getRect(const std::string& sprite_name, int frame) const { return m_frames.at(sprite_name).at(frame); }
+  SDL_Texture* getTexture(const std::string& sprite_name) const
+  {
+    return m_textures.at(sprite_name);
+  }
+  SDL_Rect getRect(const std::string& sprite_name, int frame) const
+  {
+    return m_frames.at(sprite_name).at(frame);
+  }
 
 private:
   // Map of sprite names to SDL_Texture pointers

@@ -1,23 +1,27 @@
 #pragma once
 #include "rpg/ecs.h"
-#include <memory>
 #include <SDL.h>
 #include <map>
+#include <memory>
 
 namespace rpg {
 
-class Tile {
+class Tile
+{
 public:
   using Ptr = std::shared_ptr<Tile>;
-  Tile(SDL_Texture* texture): m_texture(texture) {};
+  Tile(SDL_Texture* texture)
+    : m_texture(texture){};
   ~Tile() = default;
 
   void draw(SDL_Renderer* renderer, const SDL_Rect& dst);
+
 private:
   SDL_Texture* m_texture;
 };
 
-struct TileComponent : Component {
+struct TileComponent : Component
+{
   Tile::Ptr tile;
   float size;
 };
@@ -26,16 +30,14 @@ class TileSystem : public System
 {
 public:
   void draw(entt::registry& registry, SDL_Renderer* renderer, const Camera& camera) override;
-  int getLayer() const override {
-    return 0;
-  }
+  int getLayer() const override { return 0; }
 };
 
 class TileManager
 {
 public:
   // Constructor and destructor
-  TileManager()  = default;
+  TileManager() = default;
   ~TileManager();
 
   // Load a tile from a file
@@ -48,4 +50,4 @@ private:
   std::map<std::string, SDL_Texture*> m_textures;
 };
 
-}
+} // namespace rpg

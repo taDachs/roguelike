@@ -24,10 +24,15 @@ struct PathComponent : public Component
 class MoveTask : public Task
 {
 public:
-  MoveTask(const glm::vec2& goal, float tolerance) : m_goal(goal), m_tolerance(tolerance) {}
+  MoveTask(const glm::vec2& goal, float tolerance)
+    : m_goal(goal)
+    , m_tolerance(tolerance)
+  {
+  }
   bool isDone(entt::registry& registry, const entt::entity& entity) const override;
   void start(entt::registry& registry, const entt::entity& entity) override;
   void finish(entt::registry& registry, const entt::entity& entity) override;
+
 private:
   glm::vec2 m_goal;
   float m_tolerance;

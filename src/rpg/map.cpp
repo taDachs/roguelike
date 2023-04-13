@@ -79,7 +79,7 @@ void Map::addTileEntities(entt::registry& registry, TileManager& tm) const
       auto& pose = registry.emplace<PositionComponent>(entity);
       pose.pose  = real_pose;
       auto& tile = registry.emplace<TileComponent>(entity);
-      tile.size = m_resolution;
+      tile.size  = m_resolution;
 
       // draw cells
       if (m_occupancy[x + y * m_width])
@@ -175,4 +175,4 @@ std::vector<glm::vec2> Map::findPath(glm::vec2 real_start, glm::vec2 real_goal) 
 
   total_path = std::vector<glm::vec2>(total_path.rbegin(), total_path.rend());
   return total_path;
- }
+}

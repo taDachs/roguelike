@@ -13,10 +13,14 @@ void Sprite::update()
   if (diff > m_frame_delay)
   {
     m_current_frame += diff / m_frame_delay;
-    if (m_current_frame >= m_frames.size()) {
-      if (m_loop) {
+    if (m_current_frame >= m_frames.size())
+    {
+      if (m_loop)
+      {
         m_current_frame %= m_frames.size();
-      } else {
+      }
+      else
+      {
         m_current_frame = m_frames.size() - 1;
       }
     }
@@ -55,21 +59,28 @@ void Sprite::reset()
 
 SpriteManager::~SpriteManager()
 {
-  for (auto& [name, texture] : m_textures) {
+  for (auto& [name, texture] : m_textures)
+  {
     SDL_DestroyTexture(texture);
   }
 }
 
 // Load a sprite from a file
-void SpriteManager::addSprite(const std::string& sprite_name, const std::string& filename, float frame_delays, SDL_Renderer* renderer, bool loop)
+void SpriteManager::addSprite(const std::string& sprite_name,
+                              const std::string& filename,
+                              float frame_delays,
+                              SDL_Renderer* renderer,
+                              bool loop)
 {
   SDL_Surface* surface = IMG_Load(filename.c_str());
-  if (!surface) {
+  if (!surface)
+  {
     printf("Failed to load image: %s\n", SDL_GetError());
     return;
   }
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-  if (!texture) {
+  if (!texture)
+  {
     SDL_FreeSurface(surface);
     printf("Failed to create texture: %s\n", SDL_GetError());
     return;
@@ -85,20 +96,18 @@ void SpriteManager::addSprite(const std::string& sprite_name, const std::string&
     frames.push_back({x, 0, texture_height, texture_height});
   }
 
-  m_textures[sprite_name] = texture;
-  m_frames[sprite_name] = frames;
+  m_textures[sprite_name]     = texture;
+  m_frames[sprite_name]       = frames;
   m_frame_delays[sprite_name] = frame_delays;
-  m_loops[sprite_name] = loop;
+  m_loops[sprite_name]        = loop;
 }
 
 // Get a sprite by name
 Sprite::Ptr SpriteManager::getSprite(const std::string& sprite_name)
 {
-  return std::make_shared<Sprite>(
-    m_textures.at(sprite_name),
-    m_frames.at(sprite_name),
-    m_frames.at(sprite_name).size(),
-    m_frame_delays.at(sprite_name),
-    m_loops.at(sprite_name)
-  );
+  return std::make_shared<Sprite>(m_textures.at(sprite_name),
+                                  m_frames.at(sprite_name),
+                                  m_frames.at(sprite_name).size(),
+                                  m_frame_delays.at(sprite_name),
+                                  m_loops.at(sprite_name));
 }

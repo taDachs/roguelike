@@ -25,7 +25,7 @@ void BodySystem::update(entt::registry& registry)
     float total_speed = 0;
     std::vector<entt::entity> slots;
     float total_max_health = 0;
-    float total_health = 0;
+    float total_health     = 0;
 
     for (const auto& body_limb : body.limbs)
     {
@@ -61,9 +61,9 @@ void BodySystem::update(entt::registry& registry)
     }
     if (total_max_health > 0)
     {
-      auto& health = registry.get_or_emplace<HealthComponent>(entity);
+      auto& health      = registry.get_or_emplace<HealthComponent>(entity);
       health.max_health = total_max_health;
-      health.health = total_health;
+      health.health     = total_health;
     }
   }
 }
@@ -103,5 +103,4 @@ void LimbSystem::update(entt::registry& registry)
                                           glm::cos(angle_rad)); // create a 2D rotation matrix
     pose.pose                 = attached_pose.pose + rotation_matrix * limb.offset;
   }
-
 }

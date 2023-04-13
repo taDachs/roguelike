@@ -8,15 +8,14 @@ using namespace rpg;
 
 const float RUNNING_THRESH = 0.1;
 
-void HealthSystem::update(entt::registry& registry)
-{
-}
+void HealthSystem::update(entt::registry& registry) {}
 
 void SlotSystem::update(entt::registry& registry)
 {
-  for (auto &&[entity, slot, pose] : registry.view<SlotComponent, PositionComponent>().each())
+  for (auto&& [entity, slot, pose] : registry.view<SlotComponent, PositionComponent>().each())
   {
-    if (!registry.valid(slot.equipped)) {
+    if (!registry.valid(slot.equipped))
+    {
       continue;
     }
 
@@ -25,9 +24,9 @@ void SlotSystem::update(entt::registry& registry)
       continue;
     }
 
-    auto& equipped_pose = registry.get<PositionComponent>(slot.equipped);
-    equipped_pose.pose = pose.pose + slot.offset;
-    equipped_pose.orientation    = glm::normalize(pose.orientation + slot.orientation);
+    auto& equipped_pose       = registry.get<PositionComponent>(slot.equipped);
+    equipped_pose.pose        = pose.pose + slot.offset;
+    equipped_pose.orientation = glm::normalize(pose.orientation + slot.orientation);
 
     float dot_product = glm::dot({0, -1}, pose.orientation);
     float angle_rad   = acos(dot_product);
@@ -45,23 +44,26 @@ void SlotSystem::update(entt::registry& registry)
                                           glm::sin(angle_rad),
                                           -glm::sin(angle_rad),
                                           glm::cos(angle_rad)); // create a 2D rotation matrix
-    equipped_pose.pose                 = pose.pose + rotation_matrix * slot.offset;
+    equipped_pose.pose        = pose.pose + rotation_matrix * slot.offset;
   }
 }
 
 
 void HealthSystem::draw(entt::registry& registry, SDL_Renderer* renderer, const Camera& camera)
 {
-  for (auto &&[entity, health, pose] : registry.view<HealthComponent, PositionComponent>().each())
+  for (auto&& [entity, health, pose] : registry.view<HealthComponent, PositionComponent>().each())
   {
     glm::vec2 screen_pose = camera.realToScreen(pose.pose);
 
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    SDL_Rect full_bar = {
-      static_cast<int>(screen_pose.x - 50), static_cast<int>(screen_pose.y), static_cast<int>(health.max_health), 10};
+    SDL_Rect full_bar = {static_cast<int>(screen_pose.x - 50),
+                         static_cast<int>(screen_pose.y),
+                         static_cast<int>(health.max_health),
+                         10};
     SDL_RenderFillRect(renderer, &full_bar);
 
-    if (health.health > 0) {
+    if (health.health > 0)
+    {
       SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
       SDL_Rect depleted_bar = {full_bar.x, full_bar.y, static_cast<int>(health.health), 10};
       SDL_RenderFillRect(renderer, &depleted_bar);
@@ -71,12 +73,13 @@ void HealthSystem::draw(entt::registry& registry, SDL_Renderer* renderer, const 
 
 void StateSystem::update(entt::registry& registry)
 {
-  for (auto &&[entity, state] : registry.view<StateComponent>().each())
+  for (auto&& [entity, state] : registry.view<StateComponent>().each())
   {
     if (registry.all_of<HealthComponent>(entity))
     {
       auto& health = registry.get<HealthComponent>(entity);
-      if (health.health <= 0) {
+      if (health.health <= 0)
+      {
         state.state = State::DEAD;
         continue;
       }

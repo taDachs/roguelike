@@ -14,7 +14,8 @@ bool rpg::findClicked(entt::registry& registry,
     glm::vec2 entity_screen_pose = camera.realToScreen(pose.pose);
     glm::vec2 relative_pose =
       screen_pos - entity_screen_pose - glm::vec2(clickable.bbox.x, clickable.bbox.y);
-    if (relative_pose.x >= 0 && relative_pose.x < clickable.bbox.w && relative_pose.y >= 0 && relative_pose.y < clickable.bbox.h)
+    if (relative_pose.x >= 0 && relative_pose.x < clickable.bbox.w && relative_pose.y >= 0 &&
+        relative_pose.y < clickable.bbox.h)
     {
       clicked = entity;
       return true;
@@ -31,7 +32,8 @@ void ClickableSystem::update(entt::registry& registry)
     glm::vec2 entity_screen_pose = m_camera.realToScreen(pose.pose);
     glm::vec2 relative_pose =
       m_mouse_pose - entity_screen_pose - glm::vec2(clickable.bbox.x, clickable.bbox.y);
-    clickable.hovered = relative_pose.x >= 0 && relative_pose.x < clickable.bbox.w && relative_pose.y >= 0 && relative_pose.y < clickable.bbox.h;
+    clickable.hovered = relative_pose.x >= 0 && relative_pose.x < clickable.bbox.w &&
+                        relative_pose.y >= 0 && relative_pose.y < clickable.bbox.h;
   }
 }
 

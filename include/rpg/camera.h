@@ -6,8 +6,14 @@ namespace rpg {
 class Camera
 {
 public:
-  glm::vec2 realToScreen(const glm::vec2& real_coord) const { return m_real_to_screen * glm::vec3(real_coord, 1); };
-  glm::vec2 screenToReal(const glm::vec2& screen_coord) const { return m_screen_to_real * glm::vec3(screen_coord, 1); };
+  glm::vec2 realToScreen(const glm::vec2& real_coord) const
+  {
+    return m_real_to_screen * glm::vec3(real_coord, 1);
+  };
+  glm::vec2 screenToReal(const glm::vec2& screen_coord) const
+  {
+    return m_screen_to_real * glm::vec3(screen_coord, 1);
+  };
 
   void setRealToScreen(const glm::mat3& real_to_screen)
   {
@@ -27,4 +33,4 @@ private:
   glm::mat3 m_real_to_screen;
   glm::mat3 m_screen_to_real;
 };
-}
+} // namespace rpg

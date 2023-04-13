@@ -21,10 +21,7 @@ struct PositionComponent : public Component
   glm::vec2 pose;
   glm::vec2 orientation = {0, -1};
 
-  float distance(const PositionComponent& other) const
-  {
-    return glm::length(other.pose - pose);
-  }
+  float distance(const PositionComponent& other) const { return glm::length(other.pose - pose); }
 };
 
 struct StateComponent : public Component
@@ -32,7 +29,8 @@ struct StateComponent : public Component
   State state;
 };
 
-struct HealthComponent : public Component {
+struct HealthComponent : public Component
+{
   float health;
   float max_health;
 };
